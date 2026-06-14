@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PRSK Fleet Manager</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%232563EB'/><text y='72' x='50' text-anchor='middle' font-size='55'>🚗</text></svg>">
+<meta name="description" content="PRSK Fleet Manager - Road Tax and Vehicle Compliance Tracking">
+<meta property="og:title" content="PRSK Fleet Manager">
+<meta property="og:description" content="Smart road tax and fleet compliance management for PRSK Construction Sdn. Bhd.">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#070B14;--surf:#0D1117;--card:#111827;--bdr:#1E2A3A;--bdr2:#243044;
+  --blue:#2563EB;--blue2:#3B82F6;--bdim:rgba(37,99,235,0.12);
+  --green:#10B981;--gdim:rgba(16,185,129,0.1);
+  --red:#EF4444;--rdim:rgba(239,68,68,0.1);
+  --amber:#F59E0B;--adim:rgba(245,158,11,0.1);
+  --orange:#F97316;--odim:rgba(249,115,22,0.1);
+  --txt:#F8FAFC;--txt2:#94A3B8;--muted:#475569;
+  --sw:240px;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;}
+/* SPLASH */
+#splash{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;text-align:center;}
+.sp-icon{width:64px;height:64px;background:var(--blue);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 20px;box-shadow:0 0 40px rgba(37,99,235,0.4);}
+.sp-h{font-size:32px;font-weight:800;margin-bottom:8px;}
+.sp-h span{color:var(--blue2);}
+.sp-sub{font-size:14px;color:var(--txt2);margin-bottom:6px;}
+.sp-co{font-size:12px;color:var(--muted);margin-bottom:32px;}
+.sp-pills{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:36px;}
+.sp-pill{background:var(--card);border:1px solid var(--bdr);color:var(--txt2);padding:7px 14px;border-radius:8px;font-size:12px;}
+.sp-btn{background:var(--blue);color:#fff;border:none;padding:15px 44px;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;box-shadow:0 8px 30px rgba(37,99,235,0.4);-webkit-tap-highlight-color:transparent;}
+.sp-note{font-size:12px;color:var(--muted);margin-top:14px;}
+/* RIBBON */
+#ribbon{display:none;background:var(--blue);padding:8px 20px;text-align:center;font-size:12px;font-weight:600;color:#fff;position:fixed;top:0;left:0;right:0;z-index:200;gap:14px;justify-content:center;align-items:center;}
+#ribbon a{color:#fff;text-decoration:none;background:rgba(255,255,255,0.2);padding:3px 12px;border-radius:20px;font-size:11px;}
+/* SIDEBAR */
+.sb{position:fixed;top:36px;left:0;bottom:0;width:var(--sw);background:var(--surf);border-right:1px solid var(--bdr);display:flex;flex-direction:column;z-index:100;}
+.sb-logo{padding:18px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:10px;}
+.sb-ico{width:32px;height:32px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;}
+.sb-n{font-size:14px;font-weight:800;}
+.sb-n span{color:var(--blue2);}
+.sb-v{font-size:10px;color:var(--muted);}
+.sb-nav{padding:12px 10px;flex:1;}
+.nl{font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:4px 8px 8px;}
+.ni{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;font-size:13px;font-weight:500;color:var(--txt2);cursor:pointer;margin-bottom:2px;}
+.ni:hover{background:var(--card);color:var(--txt);}
+.ni.on{background:var(--bdim);color:var(--blue2);}
+.nb2{display:inline-block;font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;margin-left:auto;}
+.sb-foot{padding:14px 12px;border-top:1px solid var(--bdr);}
+.uc{display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px;background:var(--card);}
+.ua{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--blue),#7C3AED);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;}
+.un{font-size:12px;font-weight:600;}
+.ur{font-size:10px;color:var(--muted);}
+.sb-cr{padding:8px 14px;text-align:center;border-top:1px solid var(--bdr);}
+.sb-cr p{font-size:9px;color:var(--muted);line-height:1.6;}
+.sb-cr span{color:var(--blue2);font-weight:700;}
+/* TOPBAR */
+.tb{position:fixed;top:36px;left:var(--sw);right:0;height:56px;background:var(--surf);border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;padding:0 24px;z-index:90;}
+.tb-l .tt{font-size:16px;font-weight:600;}
+.tb-l .ts{font-size:12px;color:var(--muted);}
+.tb-r{display:flex;align-items:center;gap:8px;}
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;-webkit-tap-highlight-color:transparent;}
+.btn-blue{background:var(--blue);color:#fff;}
+.btn-ghost{background:transparent;color:var(--txt2);border:1px solid var(--bdr);}
+.btn-cta{background:linear-gradient(135deg,var(--amber),var(--orange));color:#0f1117;}
+.btn-sm{padding:6px 12px;font-size:12px;}
+.btn-wa{background:#128C7E;color:#fff;}
+/* NOTIF */
+.nb-w{position:relative;}
+.nb-b{position:relative;background:var(--card);border:1px solid var(--bdr);border-radius:8px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px;-webkit-tap-highlight-color:transparent;}
+.nb-d{position:absolute;top:-3px;right:-3px;background:var(--red);color:#fff;border-radius:50%;width:17px;height:17px;font-size:9px;font-weight:700;display:none;align-items:center;justify-content:center;border:2px solid var(--surf);}
+.np{display:none;position:fixed;top:96px;right:20px;width:350px;max-height:480px;background:var(--surf);border:1px solid var(--bdr);border-radius:14px;z-index:300;box-shadow:0 20px 60px rgba(0,0,0,0.7);flex-direction:column;}
+.np.open{display:flex;}
+.np-h{padding:14px 18px 12px;border-bottom:1px solid var(--bdr);display:flex;justify-content:space-between;align-items:center;}
+.np-ht{font-size:14px;font-weight:700;}
+.np-cl{font-size:12px;color:var(--blue2);background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.np-s{overflow-y:auto;flex:1;}
+.np-em{padding:32px;text-align:center;color:var(--muted);font-size:13px;}
+.np-i{padding:13px 18px;border-bottom:1px solid var(--bdr);display:flex;gap:10px;cursor:pointer;}
+.np-i:hover{background:var(--card);}
+.np-i.unread{background:rgba(37,99,235,0.04);}
+.np-ico{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.np-b{flex:1;}
+.np-it{font-size:13px;font-weight:600;margin-bottom:2px;}
+.np-id{font-size:12px;color:var(--txt2);line-height:1.4;}
+.np-im{font-size:11px;color:var(--muted);margin-top:3px;}
+.np-ud{width:7px;height:7px;border-radius:50%;background:var(--blue2);flex-shrink:0;margin-top:5px;}
+/* CONTENT */
+.cn{margin-left:var(--sw);padding-top:92px;min-height:100vh;}
+.ci{padding:24px 24px 60px;}
+/* STATS */
+.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
+.sc{background:var(--card);border:1px solid var(--bdr);border-radius:12px;padding:18px 20px;position:relative;overflow:hidden;}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.sc.b::before{background:var(--blue);}
+.sc.g::before{background:var(--green);}
+.sc.a::before{background:var(--amber);}
+.sc.r::before{background:var(--red);}
+.sc-i{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:12px;}
+.sc-i.b{background:var(--bdim);}
+.sc-i.g{background:var(--gdim);}
+.sc-i.a{background:var(--adim);}
+.sc-i.r{background:var(--rdim);}
+.sc-v{font-size:30px;font-weight:800;margin-bottom:4px;}
+.b .sc-v{color:var(--txt);}
+.g .sc-v{color:var(--green);}
+.a .sc-v{color:var(--amber);}
+.r .sc-v{color:var(--red);}
+.sc-l{font-size:12px;color:var(--muted);}
+/* ALERTS */
+.al{display:flex;flex-direction:column;gap:8px;margin-bottom:22px;}
+.ab{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:10px;}
+.ab.exp{background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);}
+.ab.w7{background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.15);}
+.ab.w14{background:rgba(249,115,22,0.06);border:1px solid rgba(249,115,22,0.18);}
+.ab.w21{background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.18);}
+.ab.w30{background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.15);}
+.ab-d{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.exp .ab-d,.w7 .ab-d{background:var(--red);}
+.w14 .ab-d{background:var(--orange);}
+.w21 .ab-d{background:var(--amber);}
+.w30 .ab-d{background:var(--green);}
+.ab-t{flex:1;font-size:13px;}
+.ab-p{font-size:12px;color:var(--muted);margin-top:2px;}
+.ab-tag{font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;}
+.exp .ab-t strong,.w7 .ab-t strong{color:var(--red);}
+.w14 .ab-t strong{color:var(--orange);}
+.w21 .ab-t strong{color:var(--amber);}
+.w30 .ab-t strong{color:var(--green);}
+.exp .ab-tag,.w7 .ab-tag{background:var(--rdim);color:var(--red);}
+.w14 .ab-tag{background:var(--odim);color:var(--orange);}
+.w21 .ab-tag{background:var(--adim);color:var(--amber);}
+.w30 .ab-tag{background:var(--gdim);color:var(--green);}
+/* PANEL */
+.pn{background:var(--card);border:1px solid var(--bdr);border-radius:12px;margin-bottom:22px;overflow:hidden;}
+.ph{padding:14px 18px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;}
+.ph-t{font-size:14px;font-weight:700;}
+.pch{font-size:11px;background:var(--surf);border:1px solid var(--bdr);border-radius:6px;padding:4px 10px;color:var(--muted);}
+.pch.on{border-color:rgba(16,185,129,.3);color:var(--green);}
+.tr{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid var(--bdr);}
+.tr:last-child{border-bottom:none;}
+.tr-l{font-size:13px;font-weight:500;}
+.tr-s{font-size:11px;color:var(--muted);margin-top:2px;}
+.tog{position:relative;width:38px;height:21px;flex-shrink:0;}
+.tog input{opacity:0;width:0;height:0;}
+.tog-s{position:absolute;inset:0;background:var(--bdr2);border-radius:21px;cursor:pointer;transition:.2s;}
+.tog-s::before{content:'';position:absolute;width:15px;height:15px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;}
+.tog input:checked+.tog-s{background:var(--blue);}
+.tog input:checked+.tog-s::before{transform:translateX(17px);}
+/* TABLE */
+.tp{background:var(--card);border:1px solid var(--bdr);border-radius:12px;overflow:hidden;}
+.ttb{padding:14px 16px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.sw{position:relative;flex:1;min-width:160px;}
+.sw input{width:100%;background:var(--surf);border:1px solid var(--bdr);border-radius:8px;color:var(--txt);padding:8px 12px 8px 34px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;}
+.sw input:focus{border-color:var(--blue);}
+.sw input::placeholder{color:var(--muted);}
+.sw-i{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);}
+.fts{display:flex;gap:4px;}
+.ft{padding:6px 12px;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--bdr);background:transparent;color:var(--txt2);font-family:'DM Sans',sans-serif;}
+.ft.on{background:var(--bdim);color:var(--blue2);border-color:rgba(37,99,235,.3);}
+table{width:100%;border-collapse:collapse;}
+thead tr{background:var(--surf);}
+th{padding:10px 14px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;text-align:left;border-bottom:1px solid var(--bdr);}
+td{padding:13px 14px;font-size:13px;border-bottom:1px solid var(--bdr);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tbody tr:hover td{background:rgba(255,255,255,.015);}
+tbody tr.ue td:first-child,tbody tr.u7 td:first-child{border-left:2px solid var(--red);}
+tbody tr.u14 td:first-child{border-left:2px solid var(--orange);}
+tbody tr.u21 td:first-child{border-left:2px solid var(--amber);}
+tbody tr.u30 td:first-child{border-left:2px solid var(--green);}
+.pl{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;background:var(--surf);border:1px solid var(--bdr);border-radius:6px;padding:4px 10px;display:inline-block;}
+.vn{font-size:11px;color:var(--muted);margin-top:3px;}
+.ch{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;}
+.ch-d{width:6px;height:6px;border-radius:50%;background:currentColor;}
+.cg{background:var(--gdim);color:var(--green);}
+.cr{background:var(--rdim);color:var(--red);}
+.ca{background:var(--adim);color:var(--amber);}
+.co{background:var(--odim);color:var(--orange);}
+.cb{background:var(--bdim);color:var(--blue2);}
+.dv{font-size:13px;font-weight:700;}
+.dv.r{color:var(--red);} .dv.o{color:var(--orange);} .dv.a{color:var(--amber);} .dv.g{color:var(--green);} .dv.m{color:var(--txt2);}
+.ac{display:flex;gap:6px;}
+.ac-b{width:30px;height:30px;border-radius:7px;border:1px solid var(--bdr);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;-webkit-tap-highlight-color:transparent;}
+.ac-b:hover{background:var(--surf);}
+.ac-b.del:hover{background:var(--rdim);}
+.iw{font-size:11px;color:var(--orange);margin-top:3px;}
+.em-c{padding:48px;text-align:center;color:var(--muted);}
+/* MODAL */
+.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:400;align-items:center;justify-content:center;}
+.ov.open{display:flex;}
+.mo{background:var(--surf);border:1px solid var(--bdr);border-radius:16px;width:500px;max-width:95vw;max-height:92vh;overflow-y:auto;box-shadow:0 32px 80px rgba(0,0,0,.7);}
+.moh{padding:20px 24px 16px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;}
+.moh-t{font-size:16px;font-weight:700;}
+.moc{font-size:20px;background:none;border:none;cursor:pointer;color:var(--txt2);padding:4px 8px;}
+.mob{padding:20px 24px;}
+.mn{background:var(--bdim);border:1px solid rgba(37,99,235,.2);border-radius:8px;padding:9px 13px;font-size:12px;color:var(--blue2);margin-bottom:18px;}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.fi{display:flex;flex-direction:column;gap:5px;}
+.fi.full{grid-column:1/-1;}
+.fl{font-size:12px;font-weight:600;color:var(--txt2);}
+.fin{background:var(--card);border:1px solid var(--bdr);border-radius:8px;color:var(--txt);padding:10px 12px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;width:100%;}
+.fin:focus{border-color:var(--blue);}
+.fin::placeholder{color:var(--muted);}
+.pl-in{font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;}
+.mof{padding:14px 24px;border-top:1px solid var(--bdr);display:flex;justify-content:flex-end;gap:10px;}
+/* CHATBOT */
+.cb-fab{position:fixed;bottom:24px;right:24px;width:56px;height:56px;background:var(--blue);border-radius:50%;display:none;align-items:center;justify-content:center;font-size:24px;cursor:pointer;box-shadow:0 8px 24px rgba(37,99,235,.5);z-index:500;border:none;-webkit-tap-highlight-color:transparent;}
+.cb-fab.show{display:flex;}
+.cb-box{position:fixed;bottom:90px;right:24px;width:340px;max-width:calc(100vw - 32px);height:480px;background:var(--surf);border:1px solid var(--bdr);border-radius:16px;display:none;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,.7);z-index:500;overflow:hidden;}
+.cb-box.open{display:flex;}
+.cb-h{background:linear-gradient(135deg,var(--blue),#1D4ED8);padding:14px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.cb-av{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:20px;}
+.cb-inf{flex:1;}
+.cb-nm{font-size:14px;font-weight:700;color:#fff;}
+.cb-st{font-size:11px;color:rgba(255,255,255,.7);display:flex;align-items:center;gap:4px;}
+.cb-dot{width:6px;height:6px;border-radius:50%;background:#10B981;}
+.cb-cls{background:none;border:none;color:rgba(255,255,255,.8);font-size:20px;cursor:pointer;padding:4px;}
+.cb-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;}
+.msg{max-width:85%;padding:10px 13px;border-radius:12px;font-size:13px;line-height:1.5;}
+.msg-b{background:var(--card);color:var(--txt);border-radius:4px 12px 12px 12px;align-self:flex-start;}
+.msg-u{background:var(--blue);color:#fff;border-radius:12px 4px 12px 12px;align-self:flex-end;}
+.cb-typ{display:none;align-self:flex-start;background:var(--card);padding:10px 14px;border-radius:4px 12px 12px 12px;}
+.dots{display:flex;gap:4px;}
+.dots span{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:dot 1.2s infinite;}
+.dots span:nth-child(2){animation-delay:.2s;}
+.dots span:nth-child(3){animation-delay:.4s;}
+@keyframes dot{0%,60%,100%{opacity:.3;transform:translateY(0);}30%{opacity:1;transform:translateY(-4px);}}
+.cb-q{display:flex;gap:6px;flex-wrap:wrap;padding:0 14px 10px;}
+.qb{background:var(--card);border:1px solid var(--bdr);border-radius:20px;padding:6px 12px;font-size:11px;color:var(--txt2);cursor:pointer;font-family:'DM Sans',sans-serif;-webkit-tap-highlight-color:transparent;}
+.cb-wa{display:flex;align-items:center;justify-content:center;gap:6px;background:#128C7E;color:#fff;border:none;border-radius:8px;padding:9px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin:0 14px 10px;-webkit-tap-highlight-color:transparent;}
+.cb-ft{padding:10px 12px;border-top:1px solid var(--bdr);display:flex;gap:8px;flex-shrink:0;}
+.cb-in{flex:1;background:var(--card);border:1px solid var(--bdr);border-radius:8px;color:var(--txt);padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;}
+.cb-in:focus{border-color:var(--blue);}
+.cb-in::placeholder{color:var(--muted);}
+.cb-snd{background:var(--blue);color:#fff;border:none;border-radius:8px;width:36px;height:36px;cursor:pointer;font-size:16px;-webkit-tap-highlight-color:transparent;}
+/* PRICING */
+.cta{margin-top:32px;background:linear-gradient(135deg,rgba(37,99,235,.06),rgba(37,99,235,.02));border:1px solid rgba(37,99,235,.15);border-radius:14px;padding:32px;text-align:center;}
+.cta-e{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--blue2);margin-bottom:12px;}
+.cta-h{font-size:22px;font-weight:700;margin-bottom:10px;}
+.cta-h span{color:var(--blue2);}
+.cta-p{font-size:14px;color:var(--txt2);max-width:460px;margin:0 auto 22px;}
+.itags{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;margin-bottom:28px;}
+.itag{font-size:11px;background:var(--card);border:1px solid var(--bdr);border-radius:6px;padding:5px 12px;color:var(--muted);}
+.pg{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:22px;text-align:left;}
+.pc{background:var(--card);border:1px solid var(--bdr);border-radius:14px;padding:22px;display:flex;flex-direction:column;}
+.pc-pro{background:linear-gradient(160deg,rgba(37,99,235,.1),rgba(37,99,235,.04));border-color:rgba(37,99,235,.4);}
+.pc-pop{display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;background:var(--blue);color:#fff;border-radius:6px;padding:3px 10px;margin-bottom:12px;}
+.pc-nm{font-size:17px;font-weight:700;margin-bottom:4px;}
+.pc-pro .pc-nm{color:var(--blue2);}
+.pc-tg{font-size:12px;color:var(--muted);margin-bottom:14px;}
+.pc-pr{font-size:13px;color:var(--txt2);margin-bottom:4px;}
+.pc-am{font-size:32px;font-weight:800;color:var(--txt);}
+.pc-pro .pc-am{color:var(--blue2);}
+.pc-pe{font-size:13px;color:var(--muted);}
+.pc-vh{font-size:12px;color:var(--muted);background:var(--surf);border:1px solid var(--bdr);border-radius:6px;padding:4px 10px;display:inline-block;margin-bottom:14px;}
+.pc-dv{height:1px;background:var(--bdr);margin-bottom:14px;}
+.pc-fs{list-style:none;display:flex;flex-direction:column;gap:8px;margin-bottom:20px;flex:1;}
+.pc-fs li{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--txt2);}
+.pc-fs li.off{color:var(--muted);}
+.tick{font-size:13px;}
+.pc-fs li .tick{color:var(--green);}
+.pc-fs li.off .tick{color:var(--muted);}
+.pc-btn{width:100%;padding:11px;border-radius:9px;border:none;font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;margin-top:auto;-webkit-tap-highlight-color:transparent;}
+.pc-blue{background:var(--blue);color:#fff;}
+.pc-ghost{background:transparent;color:var(--txt2);border:1px solid var(--bdr);}
+.cta-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:12px;}
+.cta-note{font-size:12px;color:var(--muted);}
+/* TOAST */
+.ts-wrap{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:999;display:flex;flex-direction:column;gap:8px;pointer-events:none;width:300px;}
+.ts{background:var(--surf);border:1px solid var(--bdr);border-radius:10px;padding:12px 16px;font-size:13px;display:flex;align-items:center;gap:8px;box-shadow:0 8px 30px rgba(0,0,0,.5);}
+/* RESPONSIVE */
+@media(max-width:860px){
+  .sb{display:none;}
+  .cn{margin-left:0;}
+  .tb{left:0;}
+  #ribbon{left:0;}
+  .sg{grid-template-columns:repeat(2,1fr);}
+  th:nth-child(4),td:nth-child(4),th:nth-child(5),td:nth-child(5){display:none;}
+  .np{width:calc(100vw - 32px);right:16px;}
+  .pg{grid-template-columns:1fr;}
+  .cb-box{right:16px;width:calc(100vw - 32px);}
+  .cb-fab{right:16px;}
+}
+@media(max-width:480px){.fg{grid-template-columns:1fr;}.fi.full{grid-column:1;}}
+</style>
+</head>
+<body>
+
+<div id="splash">
+  <div class="sp-icon">🚗</div>
+  <div class="sp-h">PRSK Fleet <span>Manager</span></div>
+  <div class="sp-sub">Road Tax &amp; Vehicle Compliance Management</div>
+  <div class="sp-co">PRSK Construction Sdn. Bhd. &middot; Cameron Highlands, Malaysia</div>
+  <div class="sp-pills">
+    <div class="sp-pill">✅ Smart expiry alerts</div>
+    <div class="sp-pill">🔔 30/21/14/7 day reminders</div>
+    <div class="sp-pill">🚗 Full fleet tracking</div>
+    <div class="sp-pill">📋 JPJ &amp; Puspakom</div>
+  </div>
+  <button class="sp-btn" onclick="launchApp()">&#9654; Launch Demo</button>
+  <div class="sp-note">No sign-up required &middot; Sample data included</div>
+</div>
+
+<div id="ribbon">
+  🎯 DEMO MODE &mdash; Sample fleet data &nbsp;
+  <a href="#cta" onclick="goCTA();return false;">Get Full Version &rarr;</a>
+</div>
+
+<div id="app" style="display:none">
+  <aside class="sb">
+    <div class="sb-logo">
+      <div class="sb-ico">🚗</div>
+      <div><div class="sb-n">PRSK Fleet <span>Manager</span></div><div class="sb-v">v1.0 &middot; PRSK</div></div>
+    </div>
+    <nav class="sb-nav">
+      <div class="nl">Overview</div>
+      <div class="ni on">📊 Dashboard</div>
+      <div class="ni" onclick="proMsg()">📄 Reports <span class="nb2" style="background:var(--amber);color:#0f1117">Pro</span></div>
+      <div class="nl" style="margin-top:8px">Fleet</div>
+      <div class="ni" onclick="proMsg()">🚗 All Vehicles <span class="nb2" id="exp-b" style="background:var(--red);color:#fff;display:none">0</span></div>
+      <div class="ni" onclick="proMsg()">🛡️ Insurance <span class="nb2" style="background:var(--amber);color:#0f1117">Pro</span></div>
+      <div class="nl" style="margin-top:8px">Settings</div>
+      <div class="ni" onclick="proMsg()">🔔 Notifications</div>
+      <div class="ni" onclick="proMsg()">👥 Team Access <span class="nb2" style="background:var(--amber);color:#0f1117">Pro</span></div>
+    </nav>
+    <div class="sb-foot">
+      <div class="uc"><div class="ua">U</div><div><div class="un">Unesh Tgu &middot; Director</div><div class="ur">PRSK Construction</div></div></div>
+    </div>
+    <div class="sb-cr"><p>&copy; 2026<br><span>Built with AI Technology by Kugan Solutions</span></p></div>
+  </aside>
+
+  <div class="tb">
+    <div class="tb-l"><div class="tt">Dashboard</div><div class="ts">PRSK Vehicle Compliance</div></div>
+    <div class="tb-r">
+      <div class="nb-w">
+        <div class="nb-b" onclick="toggleNP()">🔔<span class="nb-d" id="nb-dot">0</span></div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="doExport()">📤 Export</button>
+      <button class="btn btn-blue btn-sm" onclick="openModal(null)">+ Add Vehicle</button>
+      <button class="btn btn-cta btn-sm" onclick="goFullVersion()">⭐ Get Full Version</button>
+    </div>
+  </div>
+
+  <div class="np" id="np">
+    <div class="np-h"><div class="np-ht">🔔 Notifications</div><button class="np-cl" onclick="markAllRead()">Mark all read</button></div>
+    <div class="np-s" id="np-list"></div>
+  </div>
+
+  <div class="cn"><div class="ci">
+    <div class="sg">
+      <div class="sc b"><div class="sc-i b">🚗</div><div class="sc-v" id="s-tot">0</div><div class="sc-l">Total Fleet</div></div>
+      <div class="sc g"><div class="sc-i g">✅</div><div class="sc-v" id="s-val">0</div><div class="sc-l">Road Tax Valid</div></div>
+      <div class="sc a"><div class="sc-i a">⚠️</div><div class="sc-v" id="s-soon">0</div><div class="sc-l">Expiring Soon</div></div>
+      <div class="sc r"><div class="sc-i r">🚨</div><div class="sc-v" id="s-exp">0</div><div class="sc-l">Expired</div></div>
+    </div>
+    <div class="al" id="alerts"></div>
+    <div class="pn">
+      <div class="ph"><div class="ph-t">⚙️ Reminder Settings</div><span class="pch" id="pch">Push: Off</span></div>
+      <div class="tr"><div><div class="tr-l">1 Month reminder (30 days)</div><div class="tr-s">Alert when road tax expires in 30 days</div></div><label class="tog"><input type="checkbox" id="t30" checked onchange="cfgChange()"><span class="tog-s"></span></label></div>
+      <div class="tr"><div><div class="tr-l">3 Weeks reminder (21 days)</div><div class="tr-s">Alert when road tax expires in 21 days</div></div><label class="tog"><input type="checkbox" id="t21" checked onchange="cfgChange()"><span class="tog-s"></span></label></div>
+      <div class="tr"><div><div class="tr-l">2 Weeks reminder (14 days)</div><div class="tr-s">Alert when road tax expires in 14 days</div></div><label class="tog"><input type="checkbox" id="t14" checked onchange="cfgChange()"><span class="tog-s"></span></label></div>
+      <div class="tr"><div><div class="tr-l">1 Week reminder (7 days)</div><div class="tr-s">Urgent alert when road tax expires in 7 days</div></div><label class="tog"><input type="checkbox" id="t7" checked onchange="cfgChange()"><span class="tog-s"></span></label></div>
+      <div class="tr"><div><div class="tr-l">Browser Push Notifications</div><div class="tr-s">Alerts even when tab is not open</div></div><button class="btn btn-ghost btn-sm" id="push-btn" onclick="enablePush()">Enable Push</button></div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;"><div style="font-size:15px;font-weight:700;">Vehicle Fleet</div><div style="font-size:12px;color:var(--muted);">Sorted by urgency</div></div>
+    <div class="tp">
+      <div class="ttb">
+        <div class="sw"><span class="sw-i">🔍</span><input type="text" id="search" placeholder="Search plate or vehicle..." oninput="renderTable()"></div>
+        <div class="fts">
+          <button class="ft on" onclick="setFilter('all',this)">All</button>
+          <button class="ft" onclick="setFilter('expired',this)">Expired</button>
+          <button class="ft" onclick="setFilter('soon',this)">Expiring</button>
+          <button class="ft" onclick="setFilter('valid',this)">Valid</button>
+        </div>
+      </div>
+      <table><thead><tr><th>Vehicle</th><th>Road Tax</th><th>Insurance</th><th>Puspakom</th><th>Driver</th><th>Status</th><th>Days Left</th><th></th></tr></thead>
+      <tbody id="tbody"></tbody></table>
+    </div>
+
+    <div class="cta" id="cta">
+      <div class="cta-e">Simple, transparent pricing</div>
+      <div class="cta-h">Choose your <span>PRSK Fleet Manager</span> plan</div>
+      <div class="cta-p">Built for any business that manages a fleet — construction, logistics, manufacturing, retail, F&amp;B, services and more.</div>
+      <div class="itags">
+        <span class="itag">🏗 Construction</span><span class="itag">🚚 Logistics</span><span class="itag">🏭 Manufacturing</span>
+        <span class="itag">🛒 Retail</span><span class="itag">🍜 F&amp;B</span><span class="itag">🏢 Services</span><span class="itag">🏥 Healthcare</span>
+      </div>
+      <div class="pg">
+        <div class="pc">
+          <div class="pc-nm">Starter</div><div class="pc-tg">Small teams &amp; sole proprietors</div>
+          <div class="pc-pr">RM <span class="pc-am">259</span><span class="pc-pe">/month</span></div>
+          <div class="pc-vh">Up to 10 vehicles</div><div class="pc-dv"></div>
+          <ul class="pc-fs">
+            <li><span class="tick">✓</span> Road tax expiry tracking</li>
+            <li><span class="tick">✓</span> 30/21/14/7 day alerts</li>
+            <li><span class="tick">✓</span> Insurance &amp; Puspakom tracking</li>
+            <li><span class="tick">✓</span> Push notifications</li>
+            <li><span class="tick">✓</span> CSV export</li>
+            <li class="off"><span class="tick">✗</span> WhatsApp alerts</li>
+            <li class="off"><span class="tick">✗</span> Multi-user access</li>
+            <li class="off"><span class="tick">✗</span> PDF monthly reports</li>
+          </ul>
+          <button class="pc-btn pc-ghost" onclick="openWA()">Get Started</button>
+        </div>
+        <div class="pc pc-pro">
+          <div class="pc-pop">Most Popular</div>
+          <div class="pc-nm">Pro</div><div class="pc-tg">Growing SMEs &amp; fleet managers</div>
+          <div class="pc-pr">RM <span class="pc-am">469</span><span class="pc-pe">/month</span></div>
+          <div class="pc-vh">Up to 50 vehicles</div><div class="pc-dv"></div>
+          <ul class="pc-fs">
+            <li><span class="tick">✓</span> Everything in Starter</li>
+            <li><span class="tick">✓</span> WhatsApp alerts to PIC</li>
+            <li><span class="tick">✓</span> Up to 5 user accounts</li>
+            <li><span class="tick">✓</span> Cloud sync &amp; backup</li>
+            <li><span class="tick">✓</span> Monthly PDF compliance report</li>
+            <li><span class="tick">✓</span> JPJ renewal reminders</li>
+            <li><span class="tick">✓</span> Priority email support</li>
+            <li class="off"><span class="tick">✗</span> Custom branding</li>
+          </ul>
+          <button class="pc-btn pc-blue" onclick="openWA()">Start Free Trial</button>
+        </div>
+        <div class="pc">
+          <div class="pc-nm">Enterprise</div><div class="pc-tg">Large fleets &amp; multi-branch</div>
+          <div class="pc-pr">Custom<span class="pc-pe"> pricing</span></div>
+          <div class="pc-vh">Unlimited vehicles</div><div class="pc-dv"></div>
+          <ul class="pc-fs">
+            <li><span class="tick">✓</span> Everything in Pro</li>
+            <li><span class="tick">✓</span> Unlimited user accounts</li>
+            <li><span class="tick">✓</span> Custom branding &amp; logo</li>
+            <li><span class="tick">✓</span> Multi-branch support</li>
+            <li><span class="tick">✓</span> API integration</li>
+            <li><span class="tick">✓</span> Dedicated account manager</li>
+            <li><span class="tick">✓</span> On-site setup &amp; training</li>
+            <li><span class="tick">✓</span> 24/7 WhatsApp support</li>
+          </ul>
+          <button class="pc-btn pc-ghost" onclick="openWA()">Contact Us</button>
+        </div>
+      </div>
+      <div class="cta-btns">
+        <button class="btn btn-wa" onclick="openWA()">💬 WhatsApp Us</button>
+        <button class="btn btn-blue" onclick="showToast('Request received! We will contact you shortly.')">Request a Demo</button>
+      </div>
+      <div class="cta-note">All plans include 14-day free trial &middot; No credit card required &middot; Cancel anytime</div>
+    </div>
+  </div></div>
+</div>
+
+<div class="ov" id="ov">
+  <div class="mo">
+    <div class="moh"><div class="moh-t" id="modal-title">Add Vehicle</div><button class="moc" onclick="closeModal()">&#x2715;</button></div>
+    <div class="mob">
+      <div class="mn">🎯 Demo mode — changes saved locally in your browser</div>
+      <div class="fg">
+        <div class="fi"><label class="fl">Plate Number *</label><input class="fin pl-in" type="text" id="f-plate" placeholder="BPG 1234"></div>
+        <div class="fi"><label class="fl">Vehicle Type</label><select class="fin" id="f-type"><option>Lorry</option><option>Pickup Truck</option><option>4WD / SUV</option><option>Van</option><option>Excavator</option><option>Roller</option><option>Compactor</option><option>Car</option><option>Motorcycle</option><option>Other</option></select></div>
+        <div class="fi full"><label class="fl">Vehicle Name</label><input class="fin" type="text" id="f-name" placeholder="e.g. Hino 300 Lorry"></div>
+        <div class="fi"><label class="fl">Road Tax Expiry *</label><input class="fin" type="date" id="f-roadtax"></div>
+        <div class="fi"><label class="fl">Insurance Expiry</label><input class="fin" type="date" id="f-insurance"></div>
+        <div class="fi"><label class="fl">Puspakom / Inspection</label><input class="fin" type="date" id="f-puspakom"></div>
+        <div class="fi"><label class="fl">Driver / PIC</label><input class="fin" type="text" id="f-driver" placeholder="Ahmad bin Ali"></div>
+        <div class="fi full"><label class="fl">Notes</label><input class="fin" type="text" id="f-notes" placeholder="Optional notes..."></div>
+      </div>
+    </div>
+    <div class="mof"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" onclick="saveVehicle()">Save Vehicle</button></div>
+  </div>
+</div>
+
+<!-- KUGAN AI CHATBOT -->
+<button class="cb-fab" id="cb-fab" onclick="toggleChat()">🤖</button>
+<div class="cb-box" id="cb-box">
+  <div class="cb-h">
+    <div class="cb-av">🤖</div>
+    <div class="cb-inf"><div class="cb-nm">Kugan AI Assistant</div><div class="cb-st"><span class="cb-dot"></span>Online &mdash; PRSK Fleet Manager</div></div>
+    <button class="cb-cls" onclick="toggleChat()">&#x2715;</button>
+  </div>
+  <div class="cb-msgs" id="cb-msgs"></div>
+  <div class="cb-typ" id="cb-typ"><div class="dots"><span></span><span></span><span></span></div></div>
+  <div class="cb-q" id="cb-q">
+    <button class="qb" onclick="qAsk('What is PRSK Fleet Manager?')">What is this?</button>
+    <button class="qb" onclick="qAsk('What are the pricing plans?')">Pricing</button>
+    <button class="qb" onclick="qAsk('What features are included?')">Features</button>
+    <button class="qb" onclick="qAsk('How do I get started?')">Get started</button>
+  </div>
+  <button class="cb-wa" onclick="openWA()">💬 Chat directly with Kugan on WhatsApp</button>
+  <div class="cb-ft">
+    <input class="cb-in" type="text" id="cb-in" placeholder="Ask about PRSK Fleet Manager..." onkeydown="if(event.key==='Enter')sendMsg()">
+    <button class="cb-snd" onclick="sendMsg()">&#9658;</button>
+  </div>
+</div>
+
+<div class="ts-wrap" id="ts-wrap"></div>
+
+<script>
+// ===== DATA =====
+var V = JSON.parse(localStorage.getItem('pv3')||'[]');
+var N = JSON.parse(localStorage.getItem('pn3')||'[]');
+var C = JSON.parse(localStorage.getItem('pc3')||'{"t30":true,"t21":true,"t14":true,"t7":true}');
+var editId = null, curF = 'all', npOpen = false, chatOpen = false, chatInit = false;
+
+if (!V.length) {
+  var t = new Date();
+  function dd(o){var x=new Date(t);x.setDate(x.getDate()+o);return x.toISOString().split('T')[0];}
+  V=[
+    {id:1,plate:'BPG 1234',type:'Lorry',name:'Hino 300 Lorry',roadtax:dd(180),insurance:dd(210),puspakom:dd(365),driver:'Ahmad Razali',notes:'Main site lorry'},
+    {id:2,plate:'BPG 5678',type:'Pickup Truck',name:'Toyota Hilux Revo',roadtax:dd(18),insurance:dd(25),puspakom:dd(60),driver:'Kumar Selvam',notes:'PM vehicle'},
+    {id:3,plate:'TKL 9900',type:'4WD / SUV',name:'Ford Ranger Wildtrak',roadtax:dd(-5),insurance:dd(90),puspakom:dd(120),driver:'Rajan Nair',notes:'EXPIRED'},
+    {id:4,plate:'BPG 2200',type:'Van',name:'Nissan Urvan',roadtax:dd(7),insurance:dd(15),puspakom:dd(30),driver:'Suresh Pillai',notes:'Worker transport'},
+    {id:5,plate:'PEK 1100',type:'Lorry',name:'Mitsubishi Canter',roadtax:dd(95),insurance:dd(100),puspakom:dd(-10),driver:'Ravi Shankar',notes:'Materials delivery'},
+    {id:6,plate:'BPG 3310',type:'Car',name:'Proton X50',roadtax:dd(250),insurance:dd(260),puspakom:dd(365),driver:'Unesh Tgu (Director)',notes:''},
+    {id:7,plate:'PEK 7788',type:'Pickup Truck',name:'Hilux Single Cab',roadtax:dd(21),insurance:dd(30),puspakom:dd(45),driver:'Muthu Krishnan',notes:'Site supervisor'},
+    {id:8,plate:'BPG 9901',type:'Van',name:'Toyota Hiace',roadtax:dd(30),insurance:dd(35),puspakom:dd(60),driver:'Zainal Abidin',notes:'Worker transport'},
+    {id:9,plate:'PEK 3322',type:'Lorry',name:'Isuzu ELF',roadtax:dd(14),insurance:dd(20),puspakom:dd(25),driver:'Balaji Nair',notes:'Sand delivery'},
+    {id:10,plate:'TKL 5566',type:'4WD / SUV',name:'Mitsubishi Triton',roadtax:dd(-12),insurance:dd(5),puspakom:dd(90),driver:'Wan Azri',notes:'Lojing site'}
+  ];
+  save();
+}
+
+function save(){localStorage.setItem('pv3',JSON.stringify(V));}
+function saveN(){localStorage.setItem('pn3',JSON.stringify(N));}
+function saveC(){C={t30:document.getElementById('t30').checked,t21:document.getElementById('t21').checked,t14:document.getElementById('t14').checked,t7:document.getElementById('t7').checked};localStorage.setItem('pc3',JSON.stringify(C));}
+function cfgChange(){saveC();checkN();render();}
+
+// ===== HELPERS =====
+function dl(s){if(!s)return null;var t=new Date();t.setHours(0,0,0,0);var e=new Date(s);e.setHours(0,0,0,0);return Math.round((e-t)/86400000);}
+function st(d){if(d===null)return'x';if(d<0)return'expired';if(d<=30)return'soon';return'valid';}
+function fd(s){if(!s)return'-';return new Date(s).toLocaleDateString('en-MY',{day:'2-digit',month:'short',year:'numeric'});}
+function ago(ts){var d=Date.now()-ts;if(d<60000)return'Just now';if(d<3600000)return Math.floor(d/60000)+'m ago';if(d<86400000)return Math.floor(d/3600000)+'h ago';return Math.floor(d/86400000)+'d ago';}
+
+function sChip(s,d){
+  if(s==='expired')return '<span class="ch cr"><span class="ch-d"></span>Expired</span>';
+  if(s==='valid')return '<span class="ch cg"><span class="ch-d"></span>Valid</span>';
+  if(d<=7)return '<span class="ch cr"><span class="ch-d"></span>1 Week</span>';
+  if(d<=14)return '<span class="ch co"><span class="ch-d"></span>2 Weeks</span>';
+  if(d<=21)return '<span class="ch ca"><span class="ch-d"></span>3 Weeks</span>';
+  return '<span class="ch cb"><span class="ch-d"></span>1 Month</span>';
+}
+function dChip(d){
+  if(d===null)return'-';
+  if(d<0)return '<span class="dv r">'+Math.abs(d)+'d overdue</span>';
+  if(d===0)return '<span class="dv r">Today!</span>';
+  if(d<=7)return '<span class="dv r">'+d+'d</span>';
+  if(d<=14)return '<span class="dv o">'+d+'d</span>';
+  if(d<=21)return '<span class="dv a">'+d+'d</span>';
+  if(d<=30)return '<span class="dv g">'+d+'d</span>';
+  return '<span class="dv m">'+d+'d</span>';
+}
+function uCls(d){if(d===null)return'';if(d<0)return'ue';if(d<=7)return'u7';if(d<=14)return'u14';if(d<=21)return'u21';if(d<=30)return'u30';return'';}
+
+// ===== NOTIFICATIONS =====
+var MS=[
+  {days:30,key:'t30',label:'1 Month',icon:'📅',bg:'rgba(16,185,129,0.12)',col:'#10B981'},
+  {days:21,key:'t21',label:'3 Weeks',icon:'🕐',bg:'rgba(245,158,11,0.12)',col:'#F59E0B'},
+  {days:14,key:'t14',label:'2 Weeks',icon:'⚠️',bg:'rgba(249,115,22,0.12)',col:'#F97316'},
+  {days:7,key:'t7',label:'1 Week',icon:'🚨',bg:'rgba(239,68,68,0.12)',col:'#EF4444'}
+];
+function checkN(){
+  var today=new Date().toISOString().split('T')[0];
+  for(var i=0;i<V.length;i++){
+    var v=V[i],d=dl(v.roadtax);if(d===null)continue;
+    for(var j=0;j<MS.length;j++){
+      var m=MS[j];if(!C[m.key])continue;
+      if(d>=0&&d<=m.days&&d>m.days-3){
+        var k=v.id+'_'+m.days,found=false;
+        for(var x=0;x<N.length;x++){if(N[x].key===k&&N[x].date===today){found=true;break;}}
+        if(!found){N.unshift({id:Date.now()+Math.random(),key:k,date:today,plate:v.plate,name:v.name,daysLeft:d,label:m.label,icon:m.icon,bg:m.bg,col:m.col,ts:Date.now(),read:false});doPush(v,d,m);}
+      }
+    }
+    if(d<0){
+      var k2=v.id+'_exp',f2=false;
+      for(var x=0;x<N.length;x++){if(N[x].key===k2&&N[x].date===today){f2=true;break;}}
+      if(!f2)N.unshift({id:Date.now()+Math.random(),key:k2,date:today,plate:v.plate,name:v.name,daysLeft:d,label:'EXPIRED',icon:'🔴',bg:'rgba(239,68,68,0.12)',col:'#EF4444',ts:Date.now(),read:false});
+    }
+  }
+  if(N.length>60)N=N.slice(0,60);
+  saveN();renderN();
+}
+function renderN(){
+  var u=0;for(var i=0;i<N.length;i++)if(!N[i].read)u++;
+  var d=document.getElementById('nb-dot');d.textContent=u;d.style.display=u>0?'flex':'none';
+  var eb=document.getElementById('exp-b'),ec=0;
+  for(var i=0;i<V.length;i++)if(dl(V[i].roadtax)<0)ec++;
+  eb.textContent=ec;eb.style.display=ec>0?'inline-block':'none';
+  var list=document.getElementById('np-list');
+  if(!N.length){list.innerHTML='<div class="np-em">No alerts right now ✅</div>';return;}
+  var h='';
+  for(var i=0;i<N.length;i++){
+    var n=N[i];
+    var et=n.daysLeft<0?('expired '+Math.abs(n.daysLeft)+'d ago'):('expires in '+n.daysLeft+'d');
+    h+='<div class="np-i '+(n.read?'':'unread')+'" onclick="markRead(\''+n.id+'\')">';
+    h+='<div class="np-ico" style="background:'+n.bg+'">'+n.icon+'</div>';
+    h+='<div class="np-b"><div class="np-it" style="color:'+n.col+'">'+n.plate+' - '+n.label+'</div>';
+    h+='<div class="np-id">'+(n.name||n.plate)+' road tax '+et+'</div>';
+    h+='<div class="np-im">'+ago(n.ts)+'</div></div>';
+    h+=(n.read?'':'<div class="np-ud"></div>')+'</div>';
+  }
+  list.innerHTML=h;
+}
+function markRead(id){for(var i=0;i<N.length;i++)if(String(N[i].id)===String(id)){N[i].read=true;break;}saveN();renderN();}
+function markAllRead(){for(var i=0;i<N.length;i++)N[i].read=true;saveN();renderN();}
+function toggleNP(){npOpen=!npOpen;document.getElementById('np').classList.toggle('open',npOpen);}
+document.addEventListener('click',function(e){
+  if(!npOpen)return;
+  var p=document.getElementById('np'),b=document.querySelector('.nb-b');
+  if(p&&b&&!p.contains(e.target)&&!b.contains(e.target)){npOpen=false;p.classList.remove('open');}
+});
+
+// ===== PUSH =====
+function updatePushUI(){
+  var c=document.getElementById('pch'),b=document.getElementById('push-btn');
+  if(!('Notification'in window)){c.textContent='Push: N/A';b.style.display='none';return;}
+  if(Notification.permission==='granted'){c.textContent='Push: On';c.classList.add('on');b.textContent='Enabled';b.disabled=true;}
+  else if(Notification.permission==='denied'){c.textContent='Push: Blocked';b.textContent='Blocked';}
+}
+function enablePush(){
+  if(!('Notification'in window)){showToast('Not supported.');return;}
+  Notification.requestPermission().then(function(p){updatePushUI();if(p==='granted'){showToast('Push notifications enabled!');new Notification('PRSK Fleet Manager',{body:'You will receive expiry alerts.'});}else showToast('Permission denied.');});
+}
+function doPush(v,d,m){
+  if(!('Notification'in window)||Notification.permission!=='granted')return;
+  new Notification(v.plate+' - '+m.label+' Reminder',{body:(v.name||v.plate)+' expires in '+d+' days.',tag:'prsk_'+v.id+'_'+m.days});
+}
+
+// ===== ALERTS =====
+function renderAlerts(){
+  var g={exp:[],d7:[],d14:[],d21:[],d30:[]};
+  for(var i=0;i<V.length;i++){var v=V[i],d=dl(v.roadtax);if(d===null)continue;if(d<0){g.exp.push(v);continue;}if(d<=7&&C.t7)g.d7.push(v);else if(d<=14&&C.t14)g.d14.push(v);else if(d<=21&&C.t21)g.d21.push(v);else if(d<=30&&C.t30)g.d30.push(v);}
+  function pl(vl){var o=[];for(var i=0;i<vl.length;i++)o.push('<strong>'+vl[i].plate+'</strong> '+( vl[i].name||''));return '<div class="ab-p">'+o.join(' &nbsp;·&nbsp; ')+'</div>';}
+  var h='';
+  if(g.exp.length)h+='<div class="ab exp"><div class="ab-d"></div><div class="ab-t"><strong>Expired - renew immediately</strong>'+pl(g.exp)+'</div><span class="ab-tag">Expired</span></div>';
+  if(g.d7.length)h+='<div class="ab w7"><div class="ab-d"></div><div class="ab-t"><strong>1 Week left - renew now</strong>'+pl(g.d7)+'</div><span class="ab-tag">7 days</span></div>';
+  if(g.d14.length)h+='<div class="ab w14"><div class="ab-d"></div><div class="ab-t"><strong>2 Weeks left - schedule renewal</strong>'+pl(g.d14)+'</div><span class="ab-tag">14 days</span></div>';
+  if(g.d21.length)h+='<div class="ab w21"><div class="ab-d"></div><div class="ab-t"><strong>3 Weeks left - plan renewal</strong>'+pl(g.d21)+'</div><span class="ab-tag">21 days</span></div>';
+  if(g.d30.length)h+='<div class="ab w30"><div class="ab-d"></div><div class="ab-t"><strong>1 Month left - heads up</strong>'+pl(g.d30)+'</div><span class="ab-tag">30 days</span></div>';
+  document.getElementById('alerts').innerHTML=h;
+}
+
+// ===== STATS =====
+function renderStats(){
+  var va=0,so=0,ex=0;
+  for(var i=0;i<V.length;i++){var s=st(dl(V[i].roadtax));if(s==='valid')va++;else if(s==='soon')so++;else if(s==='expired')ex++;}
+  document.getElementById('s-tot').textContent=V.length;
+  document.getElementById('s-val').textContent=va;
+  document.getElementById('s-soon').textContent=so;
+  document.getElementById('s-exp').textContent=ex;
+}
+
+// ===== TABLE =====
+function renderTable(){
+  var q=document.getElementById('search').value.toLowerCase();
+  var list=[];
+  for(var i=0;i<V.length;i++){
+    var v=V[i];
+    if(q&&v.plate.toLowerCase().indexOf(q)<0&&(v.name||'').toLowerCase().indexOf(q)<0)continue;
+    if(curF!=='all'){var s=st(dl(v.roadtax));if(curF!==s)continue;}
+    list.push(v);
+  }
+  list.sort(function(a,b){return(dl(a.roadtax)||9999)-(dl(b.roadtax)||9999);});
+  var tb=document.getElementById('tbody');
+  if(!list.length){tb.innerHTML='<tr><td colspan="8" class="em-c"><div style="font-size:28px;margin-bottom:8px">🔍</div><div style="font-size:14px;color:var(--txt2)">No vehicles found</div></td></tr>';return;}
+  var h='';
+  for(var i=0;i<list.length;i++){
+    var v=list[i],d=dl(v.roadtax),s=st(d);
+    var id=dl(v.insurance),pd=dl(v.puspakom);
+    var iw=id!==null&&id<=30?'<div class="iw">⚠️ Ins: '+id+'d</div>':'';
+    var pud=pd!==null&&pd<=30?'<span style="color:var(--orange);font-weight:600">'+pd+'d ⚠</span>':fd(v.puspakom);
+    h+='<tr class="'+uCls(d)+'">';
+    h+='<td><span class="pl">'+v.plate+'</span><div class="vn">'+v.type+(v.name?' &middot; '+v.name:'')+'</div></td>';
+    h+='<td>'+fd(v.roadtax)+iw+'</td>';
+    h+='<td>'+fd(v.insurance)+'</td>';
+    h+='<td>'+pud+'</td>';
+    h+='<td style="color:var(--txt2)">'+(v.driver||'-')+'</td>';
+    h+='<td>'+sChip(s,d)+'</td>';
+    h+='<td>'+dChip(d)+'</td>';
+    h+='<td><div class="ac"><button class="ac-b" onclick="editV('+v.id+')">✏️</button><button class="ac-b del" onclick="delV('+v.id+')">🗑️</button></div></td>';
+    h+='</tr>';
+  }
+  tb.innerHTML=h;
+}
+function render(){renderStats();renderAlerts();renderTable();renderN();}
+function setFilter(f,el){curF=f;var ts=document.querySelectorAll('.ft');for(var i=0;i<ts.length;i++)ts[i].classList.remove('on');el.classList.add('on');renderTable();}
+
+// ===== MODAL =====
+function openModal(v){
+  editId=v?v.id:null;
+  document.getElementById('modal-title').textContent=v?'Edit Vehicle':'Add Vehicle';
+  document.getElementById('f-plate').value=v?v.plate:'';
+  document.getElementById('f-type').value=v?v.type:'Lorry';
+  document.getElementById('f-name').value=v?v.name:'';
+  document.getElementById('f-roadtax').value=v?v.roadtax:'';
+  document.getElementById('f-insurance').value=v?(v.insurance||''):'';
+  document.getElementById('f-puspakom').value=v?(v.puspakom||''):'';
+  document.getElementById('f-driver').value=v?(v.driver||''):'';
+  document.getElementById('f-notes').value=v?(v.notes||''):'';
+  document.getElementById('ov').classList.add('open');
+}
+function closeModal(){document.getElementById('ov').classList.remove('open');}
+function saveVehicle(){
+  var plate=document.getElementById('f-plate').value.trim().toUpperCase();
+  var roadtax=document.getElementById('f-roadtax').value;
+  if(!plate||!roadtax){showToast('Plate and road tax expiry required.');return;}
+  var obj={id:editId||Date.now(),plate:plate,type:document.getElementById('f-type').value,name:document.getElementById('f-name').value.trim(),roadtax:roadtax,insurance:document.getElementById('f-insurance').value,puspakom:document.getElementById('f-puspakom').value,driver:document.getElementById('f-driver').value.trim(),notes:document.getElementById('f-notes').value.trim()};
+  if(editId){for(var i=0;i<V.length;i++)if(V[i].id===editId){V[i]=obj;break;}showToast('Vehicle updated.');}
+  else{V.push(obj);showToast('Vehicle added.');}
+  save();closeModal();checkN();render();
+}
+function editV(id){for(var i=0;i<V.length;i++)if(V[i].id===id){openModal(V[i]);return;}}
+function delV(id){
+  var pl='';for(var i=0;i<V.length;i++)if(V[i].id===id){pl=V[i].plate;break;}
+  if(!confirm('Remove '+pl+' from fleet?'))return;
+  V=V.filter(function(v){return v.id!==id;});
+  save();render();showToast('Vehicle removed.');
+}
+
+// ===== EXPORT =====
+function doExport(){
+  var h=['Plate','Type','Name','Road Tax','Insurance','Puspakom','Driver','Days Left','Status'];
+  var rows=[h];
+  for(var i=0;i<V.length;i++){var v=V[i],d=dl(v.roadtax);rows.push([v.plate,v.type,v.name,v.roadtax,v.insurance||'',v.puspakom||'',v.driver||'',d!=null?d:'',st(d)]);}
+  var csv='';for(var i=0;i<rows.length;i++){var c=[];for(var j=0;j<rows[i].length;j++)c.push('"'+rows[i][j]+'"');csv+=c.join(',')+'\\n';}
+  var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='prsk_fleet_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+  showToast('Exported to CSV.');
+}
+
+// ===== CHATBOT =====
+var cbAnswers={
+  'what':'PRSK Fleet Manager is a smart road tax and vehicle compliance tracking system. It tracks expiry dates and alerts you at 30, 21, 14, and 7 days before expiry. 🚗',
+  'price':'We have 3 plans:\n\n🟢 Starter - RM 259/month (up to 10 vehicles)\n⭐ Pro - RM 469/month (up to 50 vehicles)\n🏢 Enterprise - Custom pricing\n\nAll plans include 14-day free trial!',
+  'plan':'We have 3 plans:\n\n🟢 Starter - RM 259/month (up to 10 vehicles)\n⭐ Pro - RM 469/month (up to 50 vehicles)\n🏢 Enterprise - Custom pricing\n\nAll plans include 14-day free trial!',
+  'feature':'PRSK Fleet Manager includes:\n\n✅ Road tax expiry tracking\n✅ 30/21/14/7 day alerts\n✅ Insurance & Puspakom tracking\n✅ Push notifications\n✅ WhatsApp alerts (Pro)\n✅ Multi-user access (Pro)\n✅ Monthly PDF reports (Pro)',
+  'start':'Easy! WhatsApp Kugan at +601151122831 and we will set everything up. 14-day free trial, no credit card needed! 🎉',
+  'trial':'Yes! All plans include a 14-day free trial. No credit card required, cancel anytime. 🎉',
+  'free':'Yes! All plans include a 14-day free trial. No credit card required, cancel anytime. 🎉',
+  'whatsapp':'Reach Kugan on WhatsApp at +601151122831. Tap the button below! 👇',
+  'contact':'Reach Kugan on WhatsApp at +601151122831. Tap the button below! 👇',
+  'hello':'Hello! 👋 I am Kugan AI, your PRSK Fleet Manager assistant. How can I help?',
+  'hi':'Hi there! 👋 I am Kugan AI. Ask me about pricing, features, or how to get started!',
+  'default':'Great question! For more details, WhatsApp Kugan at +601151122831. He will be happy to help! 💬'
+};
+function getBotReply(msg){
+  var l=msg.toLowerCase();
+  for(var k in cbAnswers)if(l.indexOf(k)>=0)return cbAnswers[k];
+  return cbAnswers['default'];
+}
+function addMsg(txt,isUser){
+  var m=document.getElementById('cb-msgs');
+  var d=document.createElement('div');
+  d.className='msg '+(isUser?'msg-u':'msg-b');
+  d.innerHTML=txt.replace(/\n/g,'<br>');
+  m.appendChild(d);m.scrollTop=m.scrollHeight;
+}
+function sendMsg(){
+  var inp=document.getElementById('cb-in');
+  var msg=inp.value.trim();if(!msg)return;
+  inp.value='';
+  addMsg(msg,true);
+  document.getElementById('cb-q').style.display='none';
+  document.getElementById('cb-typ').style.display='block';
+  var msgs=document.getElementById('cb-msgs');msgs.scrollTop=msgs.scrollHeight;
+  setTimeout(function(){
+    document.getElementById('cb-typ').style.display='none';
+    addMsg(getBotReply(msg),false);
+  },700+Math.random()*500);
+}
+function qAsk(msg){document.getElementById('cb-in').value=msg;sendMsg();}
+function toggleChat(){
+  chatOpen=!chatOpen;
+  document.getElementById('cb-box').classList.toggle('open',chatOpen);
+  if(chatOpen&&!chatInit){
+    chatInit=true;
+    setTimeout(function(){addMsg('👋 Hi! I am <strong>Kugan AI</strong>, your PRSK Fleet Manager assistant.<br><br>How can I help you today?',false);},400);
+  }
+}
+
+// ===== MISC =====
+function openWA(){window.open('https://wa.me/601151122831?text=Hi+Kugan%2C+I+am+interested+in+PRSK+Fleet+Manager.+Please+provide+more+info.','_blank');}
+function goCTA(){var el=document.getElementById('cta');if(el)el.scrollIntoView({behavior:'smooth'});}
+function goFullVersion(){openWA();setTimeout(function(){if(!chatOpen)toggleChat();},1000);}
+function proMsg(){showToast('Available in the full version.');}
+function showToast(msg){
+  var el=document.createElement('div');el.className='ts';el.innerHTML='ℹ️ <span>'+msg+'</span>';
+  var w=document.getElementById('ts-wrap');w.appendChild(el);
+  setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},3500);
+}
+
+// ===== LAUNCH =====
+function launchApp(){
+  var sp=document.getElementById('splash');
+  sp.style.opacity='0';
+  sp.style.transition='opacity 0.4s';
+  setTimeout(function(){
+    sp.style.display='none';
+    document.getElementById('ribbon').style.display='flex';
+    document.getElementById('app').style.display='block';
+    document.getElementById('cb-fab').classList.add('show');
+    document.getElementById('t30').checked=C.t30!==false;
+    document.getElementById('t21').checked=C.t21!==false;
+    document.getElementById('t14').checked=C.t14!==false;
+    document.getElementById('t7').checked=C.t7!==false;
+    updatePushUI();
+    checkN();
+    render();
+    setInterval(checkN,3600000);
+    showToast('Welcome to PRSK Fleet Manager!');
+  },400);
+}
+</script>
+</body>
+</html>
