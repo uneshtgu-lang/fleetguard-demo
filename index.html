@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PRSK Fleet Manager</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%232563EB'/><text y='72' x='50' text-anchor='middle' font-size='55'>🚗</text></svg>">
+<meta name="description" content="PRSK Fleet Manager - Road Tax and Vehicle Compliance Tracking">
+<meta property="og:title" content="PRSK Fleet Manager">
+<meta property="og:description" content="Smart road tax and fleet compliance management. Never miss an expiry again.">
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#070B14;--surf:#0D1117;--card:#111827;--bdr:#1E2A3A;--bdr2:#243044;
+  --blue:#2563EB;--blue2:#3B82F6;--bdim:rgba(37,99,235,0.12);
+  --green:#10B981;--gdim:rgba(16,185,129,0.1);
+  --red:#EF4444;--rdim:rgba(239,68,68,0.1);
+  --amber:#F59E0B;--adim:rgba(245,158,11,0.1);
+  --orange:#F97316;--odim:rgba(249,115,22,0.1);
+  --txt:#F8FAFC;--txt2:#94A3B8;--muted:#475569;
+  --sw:240px;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;}
+
+/* ── LOADING ── */
+#loading{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;}
+.load-icon{width:60px;height:60px;background:var(--blue);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:16px;animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(37,99,235,0.4);}50%{box-shadow:0 0 0 20px rgba(37,99,235,0);}}
+.load-txt{font-size:14px;color:var(--muted);}
+
+/* ── LOGIN PAGE ── */
+#login-page{display:none;min-height:100vh;align-items:center;justify-content:center;padding:20px;}
+.login-wrap{width:100%;max-width:420px;}
+.login-logo{text-align:center;margin-bottom:32px;}
+.login-icon{width:60px;height:60px;background:var(--blue);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:14px;box-shadow:0 0 40px rgba(37,99,235,0.3);}
+.login-title{font-size:26px;font-weight:800;margin-bottom:4px;}
+.login-title span{color:var(--blue2);}
+.login-sub{font-size:13px;color:var(--muted);}
+.login-card{background:var(--surf);border:1px solid var(--bdr);border-radius:16px;padding:28px;}
+.login-tabs{display:flex;gap:4px;background:var(--card);border-radius:10px;padding:4px;margin-bottom:24px;}
+.ltab{flex:1;padding:8px;border-radius:8px;border:none;background:transparent;color:var(--txt2);font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.ltab.on{background:var(--blue);color:#fff;}
+.lform{display:flex;flex-direction:column;gap:14px;}
+.lf-group{display:flex;flex-direction:column;gap:6px;}
+.lf-label{font-size:12px;font-weight:600;color:var(--txt2);}
+.lf-input{background:var(--card);border:1px solid var(--bdr);border-radius:8px;color:var(--txt);padding:11px 14px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;width:100%;}
+.lf-input:focus{border-color:var(--blue);}
+.lf-input::placeholder{color:var(--muted);}
+.lf-btn{background:var(--blue);color:#fff;border:none;padding:13px;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;width:100%;margin-top:4px;}
+.lf-btn:hover{background:var(--blue2);}
+.lf-err{background:var(--rdim);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--red);display:none;}
+.lf-note{font-size:12px;color:var(--muted);text-align:center;margin-top:8px;}
+.trial-note{background:var(--gdim);border:1px solid rgba(16,185,129,0.3);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--green);text-align:center;margin-bottom:16px;}
+
+/* ── TRIAL EXPIRED ── */
+#trial-expired{display:none;min-height:100vh;align-items:center;justify-content:center;padding:20px;}
+.te-card{background:var(--surf);border:1px solid var(--bdr);border-radius:16px;padding:36px;text-align:center;max-width:420px;width:100%;}
+.te-icon{font-size:48px;margin-bottom:16px;}
+.te-title{font-size:22px;font-weight:700;margin-bottom:8px;}
+.te-sub{font-size:14px;color:var(--txt2);margin-bottom:24px;line-height:1.6;}
+.te-days{font-size:48px;font-weight:800;color:var(--amber);margin-bottom:4px;}
+.te-wa{background:#128C7E;color:#fff;border:none;padding:13px 28px;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;width:100%;margin-bottom:10px;}
+.te-logout{background:transparent;border:1px solid var(--bdr);color:var(--muted);padding:10px;border-radius:9px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;width:100%;}
+
+/* ── MAIN APP ── */
+#app{display:none;}
+.ribbon{background:var(--blue);padding:8px 20px;text-align:center;font-size:12px;font-weight:600;color:#fff;display:flex;align-items:center;justify-content:center;gap:14px;position:fixed;top:0;left:0;right:0;z-index:200;}
+.ribbon.trial{background:linear-gradient(90deg,var(--green),#059669);}
+.ribbon a{color:#fff;text-decoration:none;background:rgba(255,255,255,0.2);padding:3px 12px;border-radius:20px;font-size:11px;}
+.sb{position:fixed;top:36px;left:0;bottom:0;width:var(--sw);background:var(--surf);border-right:1px solid var(--bdr);display:flex;flex-direction:column;z-index:100;}
+.sb-logo{padding:18px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:10px;}
+.sb-ico{width:32px;height:32px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;}
+.sb-n{font-size:14px;font-weight:800;}
+.sb-n span{color:var(--blue2);}
+.sb-v{font-size:10px;color:var(--muted);}
+.sb-nav{padding:12px 10px;flex:1;}
+.nl{font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:4px 8px 8px;}
+.ni{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;font-size:13px;font-weight:500;color:var(--txt2);cursor:pointer;margin-bottom:2px;}
+.ni:hover{background:var(--card);color:var(--txt);}
+.ni.on{background:var(--bdim);color:var(--blue2);}
+.nb2{display:inline-block;font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;margin-left:auto;}
+.sb-foot{padding:14px 12px;border-top:1px solid var(--bdr);}
+.uc{display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px;background:var(--card);}
+.ua{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--blue),#7C3AED);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;}
+.un{font-size:12px;font-weight:600;}
+.ur{font-size:10px;color:var(--muted);}
+.sb-cr{padding:8px 14px;text-align:center;border-top:1px solid var(--bdr);}
+.sb-cr p{font-size:9px;color:var(--muted);line-height:1.6;}
+.sb-cr span{color:var(--blue2);font-weight:700;}
+.tb{position:fixed;top:36px;left:var(--sw);right:0;height:56px;background:var(--surf);border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;padding:0 24px;z-index:90;}
+.tb-l .tt{font-size:16px;font-weight:600;}
+.tb-l .ts{font-size:12px;color:var(--muted);}
+.tb-r{display:flex;align-items:center;gap:8px;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;}
+.btn-blue{background:var(--blue);color:#fff;}
+.btn-ghost{background:transparent;color:var(--txt2);border:1px solid var(--bdr);}
+.btn-red{background:var(--rdim);color:var(--red);border:1px solid rgba(239,68,68,0.3);}
+.btn-sm{padding:6px 12px;font-size:12px;}
+.btn-wa{background:#128C7E;color:#fff;}
+.nb-w{position:relative;}
+.nb-b{position:relative;background:var(--card);border:1px solid var(--bdr);border-radius:8px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px;}
+.nb-d{position:absolute;top:-3px;right:-3px;background:var(--red);color:#fff;border-radius:50%;width:17px;height:17px;font-size:9px;font-weight:700;display:none;align-items:center;justify-content:center;border:2px solid var(--surf);}
+.np{display:none;position:fixed;top:96px;right:20px;width:350px;max-height:480px;background:var(--surf);border:1px solid var(--bdr);border-radius:14px;z-index:300;box-shadow:0 20px 60px rgba(0,0,0,.7);flex-direction:column;}
+.np.open{display:flex;}
+.np-h{padding:14px 18px 12px;border-bottom:1px solid var(--bdr);display:flex;justify-content:space-between;align-items:center;}
+.np-ht{font-size:14px;font-weight:700;}
+.np-cl{font-size:12px;color:var(--blue2);background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.np-s{overflow-y:auto;flex:1;}
+.np-em{padding:32px;text-align:center;color:var(--muted);font-size:13px;}
+.np-i{padding:13px 18px;border-bottom:1px solid var(--bdr);display:flex;gap:10px;cursor:pointer;}
+.np-i:hover{background:var(--card);}
+.np-i.unread{background:rgba(37,99,235,0.04);}
+.np-ico{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.np-b{flex:1;}
+.np-it{font-size:13px;font-weight:600;margin-bottom:2px;}
+.np-id{font-size:12px;color:var(--txt2);line-height:1.4;}
+.np-im{font-size:11px;color:var(--muted);margin-top:3px;}
+.np-ud{width:7px;height:7px;border-radius:50%;background:var(--blue2);flex-shrink:0;margin-top:5px;}
+.cn{margin-left:var(--sw);padding-top:92px;min-height:100vh;}
+.ci{padding:24px 24px 60px;}
+.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
+.sc{background:var(--card);border:1px solid var(--bdr);border-radius:12px;padding:18px 20px;position:relative;overflow:hidden;}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.sc.b::before{background:var(--blue);}
+.sc.g::before{background:var(--green);}
+.sc.a::before{background:var(--amber);}
+.sc.r::before{background:var(--red);}
+.sc-i{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:12px;}
+.sc-i.b{background:var(--bdim);}
+.sc-i.g{background:var(--gdim);}
+.sc-i.a{background:var(--adim);}
+.sc-i.r{background:var(--rdim);}
+.sc-v{font-size:30px;font-weight:800;margin-bottom:4px;}
+.b .sc-v{color:var(--txt);}
+.g .sc-v{color:var(--green);}
+.a .sc-v{color:var(--amber);}
+.r .sc-v{color:var(--red);}
+.sc-l{font-size:12px;color:var(--muted);}
+.al{display:flex;flex-direction:column;gap:8px;margin-bottom:22px;}
+.ab{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:10px;}
+.ab.exp{background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);}
+.ab.w7{background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.15);}
+.ab.w14{background:rgba(249,115,22,0.06);border:1px solid rgba(249,115,22,0.18);}
+.ab.w21{background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.18);}
+.ab.w30{background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.15);}
+.ab-d{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.exp .ab-d,.w7 .ab-d{background:var(--red);}
+.w14 .ab-d{background:var(--orange);}
+.w21 .ab-d{background:var(--amber);}
+.w30 .ab-d{background:var(--green);}
+.ab-t{flex:1;font-size:13px;}
+.ab-p{font-size:12px;color:var(--muted);margin-top:2px;}
+.ab-tag{font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;}
+.exp .ab-t strong,.w7 .ab-t strong{color:var(--red);}
+.w14 .ab-t strong{color:var(--orange);}
+.w21 .ab-t strong{color:var(--amber);}
+.w30 .ab-t strong{color:var(--green);}
+.exp .ab-tag,.w7 .ab-tag{background:var(--rdim);color:var(--red);}
+.w14 .ab-tag{background:var(--odim);color:var(--orange);}
+.w21 .ab-tag{background:var(--adim);color:var(--amber);}
+.w30 .ab-tag{background:var(--gdim);color:var(--green);}
+.pn{background:var(--card);border:1px solid var(--bdr);border-radius:12px;margin-bottom:22px;overflow:hidden;}
+.ph{padding:14px 18px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;}
+.ph-t{font-size:14px;font-weight:700;}
+.pch{font-size:11px;background:var(--surf);border:1px solid var(--bdr);border-radius:6px;padding:4px 10px;color:var(--muted);}
+.pch.on{border-color:rgba(16,185,129,.3);color:var(--green);}
+.tr{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid var(--bdr);}
+.tr:last-child{border-bottom:none;}
+.tr-l{font-size:13px;font-weight:500;}
+.tr-s{font-size:11px;color:var(--muted);margin-top:2px;}
+.tog{position:relative;width:38px;height:21px;flex-shrink:0;}
+.tog input{opacity:0;width:0;height:0;}
+.tog-s{position:absolute;inset:0;background:var(--bdr2);border-radius:21px;cursor:pointer;transition:.2s;}
+.tog-s::before{content:'';position:absolute;width:15px;height:15px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;}
+.tog input:checked+.tog-s{background:var(--blue);}
+.tog input:checked+.tog-s::before{transform:translateX(17px);}
+.tp{background:var(--card);border:1px solid var(--bdr);border-radius:12px;overflow:hidden;}
+.ttb{padding:14px 16px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.sw{position:relative;flex:1;min-width:160px;}
+.sw input{width:100%;background:var(--surf);border:1px solid var(--bdr);border-radius:8px;color:var(--txt);padding:8px 12px 8px 34px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;}
+.sw input:focus{border-color:var(--blue);}
+.sw input::placeholder{color:var(--muted);}
+.sw-i{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);}
+.fts{display:flex;gap:4px;}
+.ft{padding:6px 12px;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--bdr);background:transparent;color:var(--txt2);font-family:'DM Sans',sans-serif;}
+.ft.on{background:var(--bdim);color:var(--blue2);border-color:rgba(37,99,235,.3);}
+table{width:100%;border-collapse:collapse;}
+thead tr{background:var(--surf);}
+th{padding:10px 14px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;text-align:left;border-bottom:1px solid var(--bdr);}
+td{padding:13px 14px;font-size:13px;border-bottom:1px solid var(--bdr);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tbody tr:hover td{background:rgba(255,255,255,.015);}
+tbody tr.ue td:first-child,tbody tr.u7 td:first-child{border-left:2px solid var(--red);}
+tbody tr.u14 td:first-child{border-left:2px solid var(--orange);}
+tbody tr.u21 td:first-child{border-left:2px solid var(--amber);}
+tbody tr.u30 td:first-child{border-left:2px solid var(--green);}
+.pl{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;background:var(--surf);border:1px solid var(--bdr);border-radius:6px;padding:4px 10px;display:inline-block;}
+.vn{font-size:11px;color:var(--muted);margin-top:3px;}
+.ch{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;}
+.ch-d{width:6px;height:6px;border-radius:50%;background:currentColor;}
+.cg{background:var(--gdim);color:var(--green);}
+.cr{background:var(--rdim);color:var(--red);}
+.ca{background:var(--adim);color:var(--amber);}
+.co{background:var(--odim);color:var(--orange);}
+.cb{background:var(--bdim);color:var(--blue2);}
+.dv{font-size:13px;font-weight:700;}
+.dv.r{color:var(--red);}.dv.o{color:var(--orange);}.dv.a{color:var(--amber);}.dv.g{color:var(--green);}.dv.m{color:var(--txt2);}
+.ac{display:flex;gap:6px;}
+.ac-b{width:30px;height:30px;border-radius:7px;border:1px solid var(--bdr);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;}
+.ac-b:hover{background:var(--surf);}
+.ac-b.del:hover{background:var(--rdim);}
+.iw{font-size:11px;color:var(--orange);margin-top:3px;}
+.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:400;align-items:center;justify-content:center;}
+.ov.open{display:flex;}
+.mo{background:var(--surf);border:1px solid var(--bdr);border-radius:16px;width:500px;max-width:95vw;max-height:92vh;overflow-y:auto;box-shadow:0 32px 80px rgba(0,0,0,.7);}
+.moh{padding:20px 24px 16px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;}
+.moh-t{font-size:16px;font-weight:700;}
+.moc{font-size:20px;background:none;border:none;cursor:pointer;color:var(--txt2);padding:4px 8px;}
+.mob{padding:20px 24px;}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.fi{display:flex;flex-direction:column;gap:5px;}
+.fi.full{grid-column:1/-1;}
+.fl{font-size:12px;font-weight:600;color:var(--txt2);}
+.fin{background:var(--card);border:1px solid var(--bdr);border-radius:8px;color:var(--txt);padding:10px 12px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;width:100%;}
+.fin:focus{border-color:var(--blue);}
+.fin::placeholder{color:var(--muted);}
+.pl-in{font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;}
+.mof{padding:14px 24px;border-top:1px solid var(--bdr);display:flex;justify-content:flex-end;gap:10px;}
+.ts-wrap{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:999;display:flex;flex-direction:column;gap:8px;pointer-events:none;width:300px;}
+.ts{background:var(--surf);border:1px solid var(--bdr);border-radius:10px;padding:12px 16px;font-size:13px;display:flex;align-items:center;gap:8px;box-shadow:0 8px 30px rgba(0,0,0,.5);}
+/* TRIAL BANNER */
+.trial-bar{background:linear-gradient(135deg,rgba(16,185,129,0.1),rgba(37,99,235,0.06));border:1px solid rgba(16,185,129,0.25);border-radius:12px;padding:14px 18px;margin-bottom:22px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.trial-bar h4{font-size:14px;font-weight:700;color:var(--green);margin-bottom:2px;}
+.trial-bar p{font-size:12px;color:var(--txt2);}
+.trial-bar-btn{background:var(--green);color:#fff;border:none;padding:9px 18px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;}
+@media(max-width:860px){
+  .sb{display:none;}.cn{margin-left:0;}.tb{left:0;}.ribbon{left:0;}
+  .sg{grid-template-columns:repeat(2,1fr);}
+  th:nth-child(4),td:nth-child(4),th:nth-child(5),td:nth-child(5){display:none;}
+  .np{width:calc(100vw - 32px);right:16px;}
+}
+@media(max-width:480px){.fg{grid-template-columns:1fr;}.fi.full{grid-column:1;}}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loading">
+  <div class="load-icon">🚗</div>
+  <div class="load-txt">Loading PRSK Fleet Manager...</div>
+</div>
+
+<!-- LOGIN PAGE -->
+<div id="login-page" style="display:none">
+  <div class="login-wrap">
+    <div class="login-logo">
+      <div class="login-icon">🚗</div>
+      <div class="login-title">PRSK Fleet <span>Manager</span></div>
+      <div class="login-sub">Road Tax &amp; Vehicle Compliance System</div>
+    </div>
+    <div class="login-card">
+      <div class="trial-note">🎉 7-Day Free Trial Available — No credit card required</div>
+      <div class="login-tabs">
+        <button class="ltab on" onclick="showTab('login')">Login</button>
+        <button class="ltab" onclick="showTab('register')">Register Free</button>
+      </div>
+      <!-- LOGIN FORM -->
+      <div id="login-form">
+        <div class="lform">
+          <div class="lf-err" id="login-err"></div>
+          <div class="lf-group">
+            <label class="lf-label">Email Address</label>
+            <input class="lf-input" type="email" id="login-email" placeholder="you@company.com">
+          </div>
+          <div class="lf-group">
+            <label class="lf-label">Password</label>
+            <input class="lf-input" type="password" id="login-pass" placeholder="Enter your password">
+          </div>
+          <button class="lf-btn" onclick="doLogin()">Login to My Fleet</button>
+          <div class="lf-note">Don't have an account? <a href="#" onclick="showTab('register');return false;" style="color:var(--blue2)">Register free</a></div>
+        </div>
+      </div>
+      <!-- REGISTER FORM -->
+      <div id="register-form" style="display:none">
+        <div class="lform">
+          <div class="lf-err" id="reg-err"></div>
+          <div class="lf-group">
+            <label class="lf-label">Full Name</label>
+            <input class="lf-input" type="text" id="reg-name" placeholder="Ahmad bin Ali">
+          </div>
+          <div class="lf-group">
+            <label class="lf-label">Company Name</label>
+            <input class="lf-input" type="text" id="reg-company" placeholder="ABC Construction Sdn Bhd">
+          </div>
+          <div class="lf-group">
+            <label class="lf-label">Email Address</label>
+            <input class="lf-input" type="email" id="reg-email" placeholder="you@company.com">
+          </div>
+          <div class="lf-group">
+            <label class="lf-label">Password (min 6 characters)</label>
+            <input class="lf-input" type="password" id="reg-pass" placeholder="Create a password">
+          </div>
+          <div class="lf-group">
+            <label class="lf-label">Phone Number</label>
+            <input class="lf-input" type="tel" id="reg-phone" placeholder="0123456789">
+          </div>
+          <button class="lf-btn" onclick="doRegister()">Start 7-Day Free Trial</button>
+          <div class="lf-note">By registering, you agree to our terms. Trial starts immediately.</div>
+        </div>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:16px;font-size:11px;color:var(--muted);">
+      Built with AI Technology by <span style="color:var(--blue2);font-weight:600;">Kugan Solutions</span>
+    </div>
+  </div>
+</div>
+
+<!-- TRIAL EXPIRED -->
+<div id="trial-expired" style="display:none">
+  <div class="te-card">
+    <div class="te-icon">⏰</div>
+    <div class="te-title">Your Free Trial Has Ended</div>
+    <div class="te-sub">Thank you for trying PRSK Fleet Manager! Your 7-day free trial has expired. Upgrade now to continue managing your fleet.</div>
+    <div style="background:var(--card);border:1px solid var(--bdr);border-radius:12px;padding:20px;margin-bottom:24px;">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">Continue with</div>
+      <div style="font-size:28px;font-weight:800;color:var(--blue2);margin-bottom:4px;">RM 259<span style="font-size:14px;font-weight:400;color:var(--muted)">/month</span></div>
+      <div style="font-size:12px;color:var(--txt2);">Starter Plan — Up to 10 vehicles</div>
+    </div>
+    <button class="te-wa" onclick="upgradeWA()">💬 WhatsApp Kugan to Upgrade</button>
+    <button class="te-logout" onclick="doLogout()">Logout</button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app" style="display:none">
+  <div class="ribbon trial" id="ribbon">
+    <span id="ribbon-txt">Loading...</span>
+    <a href="#" onclick="upgradeWA();return false;" id="ribbon-link">Upgrade Now</a>
+  </div>
+
+  <aside class="sb">
+    <div class="sb-logo">
+      <div class="sb-ico">🚗</div>
+      <div><div class="sb-n">PRSK Fleet <span>Manager</span></div><div class="sb-v">v2.0 — Pro</div></div>
+    </div>
+    <nav class="sb-nav">
+      <div class="nl">Overview</div>
+      <div class="ni on">📊 Dashboard</div>
+      <div class="nl" style="margin-top:8px">Fleet</div>
+      <div class="ni" onclick="proMsg()">📄 Reports <span class="nb2" style="background:var(--amber);color:#0f1117">Soon</span></div>
+      <div class="ni" onclick="proMsg()">🛡️ Insurance <span class="nb2" style="background:var(--amber);color:#0f1117">Soon</span></div>
+      <div class="nl" style="margin-top:8px">Settings</div>
+      <div class="ni" onclick="proMsg()">🔔 Notifications</div>
+      <div class="ni" onclick="doLogout()" style="color:var(--red);margin-top:8px;">🚪 Logout</div>
+    </nav>
+    <div class="sb-foot">
+      <div class="uc">
+        <div class="ua" id="ua-init">U</div>
+        <div>
+          <div class="un" id="ua-name">Loading...</div>
+          <div class="ur" id="ua-company">PRSK Fleet Manager</div>
+        </div>
+      </div>
+    </div>
+    <div class="sb-cr"><p>&copy; 2026<br><span>Built with AI Technology by Kugan Solutions</span></p></div>
+  </aside>
+
+  <div class="tb">
+    <div class="tb-l"><div class="tt">Dashboard</div><div class="ts" id="tb-sub">Vehicle Compliance</div></div>
+    <div class="tb-r">
+      <div class="nb-w">
+        <div class="nb-b" onclick="toggleNP()">🔔<span class="nb-d" id="nb-dot">0</span></div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="doExport()">📤 Export</button>
+      <button class="btn btn-blue btn-sm" onclick="openModal(null)">+ Add Vehicle</button>
+      <button class="btn btn-wa btn-sm" onclick="upgradeWA()">⭐ Upgrade</button>
+    </div>
+  </div>
+
+  <div class="np" id="np">
+    <div class="np-h"><div class="np-ht">🔔 Notifications</div><button class="np-cl" onclick="markAllRead()">Mark all read</button></div>
+    <div class="np-s" id="np-list"></div>
+  </div>
+
+  <div class="cn"><div class="ci">
+    <!-- TRIAL BANNER -->
+    <div class="trial-bar" id="trial-bar">
+      <div>
+        <h4 id="trial-bar-title">7-Day Free Trial Active</h4>
+        <p id="trial-bar-sub">days remaining. Upgrade to continue after trial.</p>
+      </div>
+      <button class="trial-bar-btn" onclick="upgradeWA()">Upgrade Now</button>
+    </div>
+
+    <div class="sg">
+      <div class="sc b"><div class="sc-i b">🚗</div><div class="sc-v" id="s-tot">0</div><div class="sc-l">Total Fleet</div></div>
+      <div class="sc g"><div class="sc-i g">✅</div><div class="sc-v" id="s-val">0</div><div class="sc-l">Road Tax Valid</div></div>
+      <div class="sc a"><div class="sc-i a">⚠️</div><div class="sc-v" id="s-soon">0</div><div class="sc-l">Expiring Soon</div></div>
+      <div class="sc r"><div class="sc-i r">🚨</div><div class="sc-v" id="s-exp">0</div><div class="sc-l">Expired</div></div>
+    </div>
+
+    <div class="al" id="alerts"></div>
+
+    <div class="pn">
+      <div class="ph"><div class="ph-t">⚙️ Reminder Settings</div><span class="pch" id="pch">Push: Off</span></div>
+      <div class="tr"><div><div class="tr-l">1 Month reminder (30 days)</div><div class="tr-s">Alert when road tax expires in 30 days</div></div><label class="tog"><input type="checkbox" id="t30" checked onchange="cfgChange()"><span class="tog-s"></span></label></div>
+      <div class="tr"><div><div class="tr-l">3 Weeks reminder (21 days)</div><div class="tr-s">Alert when road tax expires in 21 days</div></div><label class="tog"><input type="checkbox" id="t21" checked onchange="cfgChange()"><span class="tog-s"></span></label></div>
+      <div class="tr"><div><div class="tr-l">2 Weeks reminder (14 days)</div><div class="tr-s">Alert when road tax expires in 14 days</div></div><label class="tog"><input type="checkbox" id="t14" checked onchange="cfgChange()"><span class="tog-s"></span></label></div>
+      <div class="tr"><div><div class="tr-l">1 Week reminder (7 days)</div><div class="tr-s">Urgent alert when road tax expires in 7 days</div></div><label class="tog"><input type="checkbox" id="t7" checked onchange="cfgChange()"><span class="tog-s"></span></label></div>
+      <div class="tr"><div><div class="tr-l">Browser Push Notifications</div><div class="tr-s">Alerts even when tab is not open</div></div><button class="btn btn-ghost btn-sm" id="push-btn" onclick="enablePush()">Enable Push</button></div>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div style="font-size:15px;font-weight:700;">My Fleet</div>
+      <div style="font-size:12px;color:var(--muted);">Sorted by urgency</div>
+    </div>
+    <div class="tp">
+      <div class="ttb">
+        <div class="sw"><span class="sw-i">🔍</span><input type="text" id="search" placeholder="Search plate or vehicle..." oninput="renderTable()"></div>
+        <div class="fts">
+          <button class="ft on" onclick="setFilter('all',this)">All</button>
+          <button class="ft" onclick="setFilter('expired',this)">Expired</button>
+          <button class="ft" onclick="setFilter('soon',this)">Expiring</button>
+          <button class="ft" onclick="setFilter('valid',this)">Valid</button>
+        </div>
+      </div>
+      <table>
+        <thead><tr><th>Vehicle</th><th>Road Tax</th><th>Insurance</th><th>Puspakom</th><th>Driver</th><th>Status</th><th>Days Left</th><th></th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div></div>
+</div>
+
+<!-- VEHICLE MODAL -->
+<div class="ov" id="ov">
+  <div class="mo">
+    <div class="moh"><div class="moh-t" id="modal-title">Add Vehicle</div><button class="moc" onclick="closeModal()">&#x2715;</button></div>
+    <div class="mob">
+      <div class="fg">
+        <div class="fi"><label class="fl">Plate Number *</label><input class="fin pl-in" type="text" id="f-plate" placeholder="BPG 1234"></div>
+        <div class="fi"><label class="fl">Vehicle Type</label><select class="fin" id="f-type"><option>Lorry</option><option>Pickup Truck</option><option>4WD / SUV</option><option>Van</option><option>Excavator</option><option>Roller</option><option>Compactor</option><option>Car</option><option>Motorcycle</option><option>Other</option></select></div>
+        <div class="fi full"><label class="fl">Vehicle Name</label><input class="fin" type="text" id="f-name" placeholder="e.g. Hino 300 Lorry"></div>
+        <div class="fi"><label class="fl">Road Tax Expiry *</label><input class="fin" type="date" id="f-roadtax"></div>
+        <div class="fi"><label class="fl">Insurance Expiry</label><input class="fin" type="date" id="f-insurance"></div>
+        <div class="fi"><label class="fl">Puspakom / Inspection</label><input class="fin" type="date" id="f-puspakom"></div>
+        <div class="fi"><label class="fl">Driver / PIC</label><input class="fin" type="text" id="f-driver" placeholder="Ahmad bin Ali"></div>
+        <div class="fi full"><label class="fl">Notes</label><input class="fin" type="text" id="f-notes" placeholder="Optional notes..."></div>
+      </div>
+    </div>
+    <div class="mof"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-blue" onclick="saveVehicle()">Save Vehicle</button></div>
+  </div>
+</div>
+
+<div class="ts-wrap" id="ts-wrap"></div>
+
+<script>
+// ===== FIREBASE CONFIG =====
+// IMPORTANT: Replace these values with your own Firebase project config
+var firebaseConfig = {
+  apiKey: "AIzaSyA6PhGckYYJabmTBEMP4K0srCis-Pcg83o",
+  authDomain: "prsk-fleet-manager.firebaseapp.com",
+  projectId: "prsk-fleet-manager",
+  storageBucket: "prsk-fleet-manager.firebasestorage.app",
+  messagingSenderId: "903798259949",
+  appId: "1:903798259949:web:8572b7b7d350b6bf6b0ce4",
+  measurementId: "G-9QJM69XWQ8"
+};
+
+firebase.initializeApp(firebaseConfig);
+var auth = firebase.auth();
+var db = firebase.firestore();
+
+// ===== STATE =====
+var currentUser = null;
+var userData = null;
+var vehicles = [];
+var notifs = [];
+var cfg = {t30:true,t21:true,t14:true,t7:true};
+var editId = null;
+var curF = 'all';
+var npOpen = false;
+var TRIAL_DAYS = 7;
+
+// ===== AUTH =====
+auth.onAuthStateChanged(function(user) {
+  if (user) {
+    currentUser = user;
+    loadUserData();
+  } else {
+    currentUser = null;
+    showLogin();
+  }
+});
+
+function showLogin() {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('login-page').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('trial-expired').style.display = 'none';
+}
+
+function showApp() {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('login-page').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('trial-expired').style.display = 'none';
+}
+
+function showTrialExpired() {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('login-page').style.display = 'none';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('trial-expired').style.display = 'flex';
+}
+
+function showTab(tab) {
+  document.getElementById('login-form').style.display = tab === 'login' ? 'block' : 'none';
+  document.getElementById('register-form').style.display = tab === 'register' ? 'block' : 'none';
+  var tabs = document.querySelectorAll('.ltab');
+  tabs[0].classList.toggle('on', tab === 'login');
+  tabs[1].classList.toggle('on', tab === 'register');
+}
+
+function doLogin() {
+  var email = document.getElementById('login-email').value.trim();
+  var pass = document.getElementById('login-pass').value;
+  var err = document.getElementById('login-err');
+  if (!email || !pass) { showErr(err, 'Please fill in all fields.'); return; }
+  err.style.display = 'none';
+  auth.signInWithEmailAndPassword(email, pass)
+    .catch(function(e) { showErr(err, 'Invalid email or password. Please try again.'); });
+}
+
+function doRegister() {
+  var name = document.getElementById('reg-name').value.trim();
+  var company = document.getElementById('reg-company').value.trim();
+  var email = document.getElementById('reg-email').value.trim();
+  var pass = document.getElementById('reg-pass').value;
+  var phone = document.getElementById('reg-phone').value.trim();
+  var err = document.getElementById('reg-err');
+  if (!name || !company || !email || !pass) { showErr(err, 'Please fill in all required fields.'); return; }
+  if (pass.length < 6) { showErr(err, 'Password must be at least 6 characters.'); return; }
+  err.style.display = 'none';
+  auth.createUserWithEmailAndPassword(email, pass)
+    .then(function(cred) {
+      var trialStart = Date.now();
+      var trialEnd = trialStart + (TRIAL_DAYS * 24 * 60 * 60 * 1000);
+      return db.collection('users').doc(cred.user.uid).set({
+        name: name,
+        company: company,
+        email: email,
+        phone: phone,
+        trialStart: trialStart,
+        trialEnd: trialEnd,
+        plan: 'trial',
+        createdAt: Date.now()
+      });
+    })
+    .then(function() {
+      // Notify Kugan via console (in real app, use Cloud Functions)
+      notifyKugan(name, company, phone, email);
+    })
+    .catch(function(e) {
+      showErr(err, e.message);
+    });
+}
+
+function doLogout() {
+  auth.signOut();
+}
+
+function showErr(el, msg) {
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+// ===== LOAD USER DATA =====
+function loadUserData() {
+  db.collection('users').doc(currentUser.uid).get()
+    .then(function(doc) {
+      if (!doc.exists) {
+        showLogin();
+        return;
+      }
+      userData = doc.data();
+      // Check trial
+      var now = Date.now();
+      if (userData.plan === 'trial' && now > userData.trialEnd) {
+        showTrialExpired();
+        return;
+      }
+      // Load vehicles
+      loadVehicles();
+    })
+    .catch(function(e) {
+      showToast('Error loading data. Please refresh.');
+      showLogin();
+    });
+}
+
+function loadVehicles() {
+  db.collection('users').doc(currentUser.uid)
+    .collection('vehicles').orderBy('plate')
+    .onSnapshot(function(snap) {
+      vehicles = [];
+      snap.forEach(function(doc) {
+        var v = doc.data();
+        v.id = doc.id;
+        vehicles.push(v);
+      });
+      updateUI();
+      showApp();
+    });
+}
+
+function updateUI() {
+  // Update user info
+  if (userData) {
+    var initials = (userData.name || 'U').charAt(0).toUpperCase();
+    document.getElementById('ua-init').textContent = initials;
+    document.getElementById('ua-name').textContent = userData.name || 'User';
+    document.getElementById('ua-company').textContent = userData.company || 'My Company';
+    document.getElementById('tb-sub').textContent = (userData.company || 'My') + ' Vehicle Compliance';
+  }
+  // Update trial info
+  updateTrialBanner();
+  // Update push
+  updatePushUI();
+  // Render
+  checkN();
+  render();
+}
+
+function updateTrialBanner() {
+  if (!userData) return;
+  var bar = document.getElementById('trial-bar');
+  var ribbon = document.getElementById('ribbon');
+  if (userData.plan === 'trial') {
+    var daysLeft = Math.ceil((userData.trialEnd - Date.now()) / 86400000);
+    daysLeft = Math.max(0, daysLeft);
+    document.getElementById('trial-bar-title').textContent = daysLeft + ' Day' + (daysLeft !== 1 ? 's' : '') + ' Left in Free Trial';
+    document.getElementById('trial-bar-sub').textContent = 'Upgrade to keep full access after your trial ends.';
+    document.getElementById('ribbon-txt').textContent = 'FREE TRIAL — ' + daysLeft + ' day' + (daysLeft !== 1 ? 's' : '') + ' remaining';
+    document.getElementById('ribbon-link').textContent = 'Upgrade Now';
+    bar.style.display = 'flex';
+    ribbon.style.display = 'flex';
+  } else if (userData.plan === 'paid') {
+    bar.style.display = 'none';
+    document.getElementById('ribbon-txt').textContent = 'PRSK Fleet Manager — Active Subscription';
+    document.getElementById('ribbon-link').textContent = 'Support';
+    ribbon.classList.remove('trial');
+    ribbon.style.background = 'var(--blue)';
+  }
+}
+
+// ===== VEHICLES =====
+function saveVehicle() {
+  var plate = document.getElementById('f-plate').value.trim().toUpperCase();
+  var roadtax = document.getElementById('f-roadtax').value;
+  if (!plate || !roadtax) { showToast('Plate and road tax expiry required.'); return; }
+  var obj = {
+    plate: plate,
+    type: document.getElementById('f-type').value,
+    name: document.getElementById('f-name').value.trim(),
+    roadtax: roadtax,
+    insurance: document.getElementById('f-insurance').value,
+    puspakom: document.getElementById('f-puspakom').value,
+    driver: document.getElementById('f-driver').value.trim(),
+    notes: document.getElementById('f-notes').value.trim(),
+    updatedAt: Date.now()
+  };
+  var col = db.collection('users').doc(currentUser.uid).collection('vehicles');
+  if (editId) {
+    col.doc(editId).update(obj).then(function() { showToast('Vehicle updated.'); });
+  } else {
+    obj.createdAt = Date.now();
+    col.add(obj).then(function() { showToast('Vehicle added to your fleet.'); });
+  }
+  closeModal();
+}
+
+function editV(id) {
+  var v = null;
+  for (var i = 0; i < vehicles.length; i++) { if (vehicles[i].id === id) { v = vehicles[i]; break; } }
+  if (!v) return;
+  openModal(v);
+}
+
+function delV(id) {
+  var pl = '';
+  for (var i = 0; i < vehicles.length; i++) { if (vehicles[i].id === id) { pl = vehicles[i].plate; break; } }
+  if (!confirm('Remove ' + pl + ' from your fleet?')) return;
+  db.collection('users').doc(currentUser.uid).collection('vehicles').doc(id).delete()
+    .then(function() { showToast('Vehicle removed.'); });
+}
+
+// ===== HELPERS =====
+function dl(s) {
+  if (!s) return null;
+  var t = new Date(); t.setHours(0,0,0,0);
+  var e = new Date(s); e.setHours(0,0,0,0);
+  return Math.round((e - t) / 86400000);
+}
+function st(d) { if (d===null) return 'x'; if (d<0) return 'expired'; if (d<=30) return 'soon'; return 'valid'; }
+function fd(s) { if (!s) return '-'; return new Date(s).toLocaleDateString('en-MY',{day:'2-digit',month:'short',year:'numeric'}); }
+function ago(ts) { var d=Date.now()-ts; if(d<60000) return 'Just now'; if(d<3600000) return Math.floor(d/60000)+'m ago'; if(d<86400000) return Math.floor(d/3600000)+'h ago'; return Math.floor(d/86400000)+'d ago'; }
+
+function sChip(s, d) {
+  if (s==='expired') return '<span class="ch cr"><span class="ch-d"></span>Expired</span>';
+  if (s==='valid') return '<span class="ch cg"><span class="ch-d"></span>Valid</span>';
+  if (d<=7) return '<span class="ch cr"><span class="ch-d"></span>1 Week</span>';
+  if (d<=14) return '<span class="ch co"><span class="ch-d"></span>2 Weeks</span>';
+  if (d<=21) return '<span class="ch ca"><span class="ch-d"></span>3 Weeks</span>';
+  return '<span class="ch cb"><span class="ch-d"></span>1 Month</span>';
+}
+function dChip(d) {
+  if (d===null) return '-';
+  if (d<0) return '<span class="dv r">'+Math.abs(d)+'d overdue</span>';
+  if (d===0) return '<span class="dv r">Today!</span>';
+  if (d<=7) return '<span class="dv r">'+d+'d</span>';
+  if (d<=14) return '<span class="dv o">'+d+'d</span>';
+  if (d<=21) return '<span class="dv a">'+d+'d</span>';
+  if (d<=30) return '<span class="dv g">'+d+'d</span>';
+  return '<span class="dv m">'+d+'d</span>';
+}
+function uCls(d) { if(d===null) return ''; if(d<0) return 'ue'; if(d<=7) return 'u7'; if(d<=14) return 'u14'; if(d<=21) return 'u21'; if(d<=30) return 'u30'; return ''; }
+
+// ===== NOTIFICATIONS =====
+var MS = [
+  {days:30,key:'t30',label:'1 Month',icon:'📅',bg:'rgba(16,185,129,0.12)',col:'#10B981'},
+  {days:21,key:'t21',label:'3 Weeks',icon:'🕐',bg:'rgba(245,158,11,0.12)',col:'#F59E0B'},
+  {days:14,key:'t14',label:'2 Weeks',icon:'WA',bg:'rgba(249,115,22,0.12)',col:'#F97316'},
+  {days:7,key:'t7',label:'1 Week',icon:'!',bg:'rgba(239,68,68,0.12)',col:'#EF4444'}
+];
+
+function checkN() {
+  var today = new Date().toISOString().split('T')[0];
+  var stored = JSON.parse(localStorage.getItem('prsk_notifs_' + (currentUser ? currentUser.uid : 'x')) || '[]');
+  notifs = stored;
+  for (var i = 0; i < vehicles.length; i++) {
+    var v = vehicles[i]; var d = dl(v.roadtax); if (d===null) continue;
+    for (var j = 0; j < MS.length; j++) {
+      var m = MS[j]; if (!cfg[m.key]) continue;
+      if (d>=0 && d<=m.days && d>m.days-3) {
+        var k = v.id+'_'+m.days; var found = false;
+        for (var x = 0; x < notifs.length; x++) { if (notifs[x].key===k && notifs[x].date===today) { found=true; break; } }
+        if (!found) notifs.unshift({id:Date.now()+Math.random(),key:k,date:today,plate:v.plate,name:v.name,daysLeft:d,label:m.label,icon:m.icon,bg:m.bg,col:m.col,ts:Date.now(),read:false});
+      }
+    }
+    if (d < 0) {
+      var k2 = v.id+'_exp'; var f2 = false;
+      for (var x = 0; x < notifs.length; x++) { if (notifs[x].key===k2 && notifs[x].date===today) { f2=true; break; } }
+      if (!f2) notifs.unshift({id:Date.now()+Math.random(),key:k2,date:today,plate:v.plate,name:v.name,daysLeft:d,label:'EXPIRED',icon:'X',bg:'rgba(239,68,68,0.12)',col:'#EF4444',ts:Date.now(),read:false});
+    }
+  }
+  if (notifs.length > 60) notifs = notifs.slice(0, 60);
+  localStorage.setItem('prsk_notifs_' + currentUser.uid, JSON.stringify(notifs));
+  renderN();
+}
+
+function renderN() {
+  var u = 0; for (var i = 0; i < notifs.length; i++) if (!notifs[i].read) u++;
+  var dot = document.getElementById('nb-dot'); dot.textContent=u; dot.style.display=u>0?'flex':'none';
+  var list = document.getElementById('np-list');
+  if (!notifs.length) { list.innerHTML='<div class="np-em">No alerts right now</div>'; return; }
+  var h = '';
+  for (var i = 0; i < notifs.length; i++) {
+    var n = notifs[i];
+    var et = n.daysLeft<0?('expired '+Math.abs(n.daysLeft)+'d ago'):('expires in '+n.daysLeft+'d');
+    h += '<div class="np-i '+(n.read?'':'unread')+'" onclick="markRead(\''+n.id+'\')">'+
+      '<div class="np-ico" style="background:'+n.bg+'">'+n.icon+'</div>'+
+      '<div class="np-b">'+
+      '<div class="np-it" style="color:'+n.col+'">'+n.plate+' - '+n.label+'</div>'+
+      '<div class="np-id">'+(n.name||n.plate)+' road tax '+et+'</div>'+
+      '<div class="np-im">'+ago(n.ts)+'</div>'+
+      '</div>'+(n.read?'':'<div class="np-ud"></div>')+'</div>';
+  }
+  list.innerHTML = h;
+}
+
+function markRead(id) {
+  for (var i = 0; i < notifs.length; i++) { if (String(notifs[i].id)===String(id)) { notifs[i].read=true; break; } }
+  localStorage.setItem('prsk_notifs_'+currentUser.uid, JSON.stringify(notifs));
+  renderN();
+}
+function markAllRead() {
+  for (var i = 0; i < notifs.length; i++) notifs[i].read=true;
+  localStorage.setItem('prsk_notifs_'+currentUser.uid, JSON.stringify(notifs));
+  renderN();
+}
+function toggleNP() { npOpen=!npOpen; document.getElementById('np').classList.toggle('open',npOpen); }
+document.addEventListener('click', function(e) {
+  if (!npOpen) return;
+  var p=document.getElementById('np'); var b=document.querySelector('.nb-b');
+  if (p&&b&&!p.contains(e.target)&&!b.contains(e.target)) { npOpen=false; p.classList.remove('open'); }
+});
+
+// ===== PUSH =====
+function updatePushUI() {
+  var c=document.getElementById('pch'); var b=document.getElementById('push-btn');
+  if (!('Notification' in window)) { c.textContent='Push: N/A'; b.style.display='none'; return; }
+  if (Notification.permission==='granted') { c.textContent='Push: On'; c.classList.add('on'); b.textContent='Enabled'; b.disabled=true; }
+  else if (Notification.permission==='denied') { c.textContent='Push: Blocked'; }
+}
+function enablePush() {
+  if (!('Notification' in window)) { showToast('Not supported.'); return; }
+  Notification.requestPermission().then(function(p) { updatePushUI(); if (p==='granted') showToast('Push enabled!'); });
+}
+function cfgChange() {
+  cfg = {t30:document.getElementById('t30').checked,t21:document.getElementById('t21').checked,t14:document.getElementById('t14').checked,t7:document.getElementById('t7').checked};
+  checkN(); render();
+}
+
+// ===== ALERTS =====
+function renderAlerts() {
+  var g = {exp:[],d7:[],d14:[],d21:[],d30:[]};
+  for (var i=0; i<vehicles.length; i++) {
+    var v=vehicles[i]; var d=dl(v.roadtax); if(d===null) continue;
+    if (d<0) { g.exp.push(v); continue; }
+    if (d<=7&&cfg.t7) g.d7.push(v);
+    else if (d<=14&&cfg.t14) g.d14.push(v);
+    else if (d<=21&&cfg.t21) g.d21.push(v);
+    else if (d<=30&&cfg.t30) g.d30.push(v);
+  }
+  function pl(vl) { var o=[]; for(var i=0;i<vl.length;i++) o.push('<strong>'+vl[i].plate+'</strong> '+(vl[i].name||'')); return '<div class="ab-p">'+o.join(' · ')+'</div>'; }
+  var h='';
+  if (g.exp.length) h+='<div class="ab exp"><div class="ab-d"></div><div class="ab-t"><strong>Expired - renew immediately</strong>'+pl(g.exp)+'</div><span class="ab-tag">Expired</span></div>';
+  if (g.d7.length) h+='<div class="ab w7"><div class="ab-d"></div><div class="ab-t"><strong>1 Week left - renew now</strong>'+pl(g.d7)+'</div><span class="ab-tag">7 days</span></div>';
+  if (g.d14.length) h+='<div class="ab w14"><div class="ab-d"></div><div class="ab-t"><strong>2 Weeks left - schedule renewal</strong>'+pl(g.d14)+'</div><span class="ab-tag">14 days</span></div>';
+  if (g.d21.length) h+='<div class="ab w21"><div class="ab-d"></div><div class="ab-t"><strong>3 Weeks left - plan renewal</strong>'+pl(g.d21)+'</div><span class="ab-tag">21 days</span></div>';
+  if (g.d30.length) h+='<div class="ab w30"><div class="ab-d"></div><div class="ab-t"><strong>1 Month left - heads up</strong>'+pl(g.d30)+'</div><span class="ab-tag">30 days</span></div>';
+  document.getElementById('alerts').innerHTML=h;
+}
+
+// ===== STATS =====
+function renderStats() {
+  var va=0,so=0,ex=0;
+  for (var i=0;i<vehicles.length;i++) { var s=st(dl(vehicles[i].roadtax)); if(s==='valid')va++; else if(s==='soon')so++; else if(s==='expired')ex++; }
+  document.getElementById('s-tot').textContent=vehicles.length;
+  document.getElementById('s-val').textContent=va;
+  document.getElementById('s-soon').textContent=so;
+  document.getElementById('s-exp').textContent=ex;
+}
+
+// ===== TABLE =====
+function renderTable() {
+  var q=document.getElementById('search').value.toLowerCase();
+  var list=[];
+  for (var i=0;i<vehicles.length;i++) {
+    var v=vehicles[i];
+    if (q&&v.plate.toLowerCase().indexOf(q)<0&&(v.name||'').toLowerCase().indexOf(q)<0) continue;
+    if (curF!=='all') { var s=st(dl(v.roadtax)); if(curF!==s) continue; }
+    list.push(v);
+  }
+  list.sort(function(a,b) { return (dl(a.roadtax)||9999)-(dl(b.roadtax)||9999); });
+  var tb=document.getElementById('tbody');
+  if (!list.length) { tb.innerHTML='<tr><td colspan="8" style="padding:40px;text-align:center;color:var(--muted)">No vehicles found. Add your first vehicle!</td></tr>'; return; }
+  var h='';
+  for (var i=0;i<list.length;i++) {
+    var v=list[i]; var d=dl(v.roadtax); var s=st(d);
+    var id=dl(v.insurance); var pd=dl(v.puspakom);
+    var iw=id!==null&&id<=30?'<div class="iw">Ins: '+id+'d</div>':'';
+    var pud=pd!==null&&pd<=30?'<span style="color:var(--orange);font-weight:600">'+pd+'d</span>':fd(v.puspakom);
+    h+='<tr class="'+uCls(d)+'">'+
+      '<td><span class="pl">'+v.plate+'</span><div class="vn">'+v.type+(v.name?' - '+v.name:'')+'</div></td>'+
+      '<td>'+fd(v.roadtax)+iw+'</td>'+
+      '<td>'+fd(v.insurance)+'</td>'+
+      '<td>'+pud+'</td>'+
+      '<td style="color:var(--txt2)">'+(v.driver||'-')+'</td>'+
+      '<td>'+sChip(s,d)+'</td>'+
+      '<td>'+dChip(d)+'</td>'+
+      '<td><div class="ac">'+
+      '<button class="ac-b" onclick="editV(\''+v.id+'\')">Edit</button>'+
+      '<button class="ac-b del" onclick="delV(\''+v.id+'\')">Del</button>'+
+      '</div></td></tr>';
+  }
+  tb.innerHTML=h;
+}
+
+function render() { renderStats(); renderAlerts(); renderTable(); renderN(); }
+function setFilter(f,el) { curF=f; var ts=document.querySelectorAll('.ft'); for(var i=0;i<ts.length;i++) ts[i].classList.remove('on'); el.classList.add('on'); renderTable(); }
+
+// ===== MODAL =====
+function openModal(v) {
+  editId=v?v.id:null;
+  document.getElementById('modal-title').textContent=v?'Edit Vehicle':'Add Vehicle';
+  document.getElementById('f-plate').value=v?v.plate:'';
+  document.getElementById('f-type').value=v?v.type:'Lorry';
+  document.getElementById('f-name').value=v?v.name:'';
+  document.getElementById('f-roadtax').value=v?v.roadtax:'';
+  document.getElementById('f-insurance').value=v?(v.insurance||''):'';
+  document.getElementById('f-puspakom').value=v?(v.puspakom||''):'';
+  document.getElementById('f-driver').value=v?(v.driver||''):'';
+  document.getElementById('f-notes').value=v?(v.notes||''):'';
+  document.getElementById('ov').classList.add('open');
+}
+function closeModal() { document.getElementById('ov').classList.remove('open'); }
+document.getElementById('ov').onclick=function(e){if(e.target===this)closeModal();};
+
+// ===== EXPORT =====
+function doExport() {
+  var h=['Plate','Type','Name','Road Tax','Insurance','Puspakom','Driver','Days Left','Status'];
+  var rows=[h];
+  for (var i=0;i<vehicles.length;i++) { var v=vehicles[i]; var d=dl(v.roadtax); rows.push([v.plate,v.type,v.name||'',v.roadtax,v.insurance||'',v.puspakom||'',v.driver||'',d!=null?d:'',st(d)]); }
+  var csv=''; for (var i=0;i<rows.length;i++) { var c=[]; for(var j=0;j<rows[i].length;j++) c.push('"'+rows[i][j]+'"'); csv+=c.join(',')+'\\n'; }
+  var a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='fleet_'+new Date().toISOString().slice(0,10)+'.csv'; a.click();
+  showToast('Fleet exported to CSV.');
+}
+
+// ===== MISC =====
+function upgradeWA() { window.open('https://wa.me/601151122831?text=Hi+Kugan%2C+I+want+to+upgrade+my+PRSK+Fleet+Manager+subscription.','_blank'); }
+function proMsg() { showToast('This feature is coming soon!'); }
+function notifyKugan(name, company, phone, email) {
+  var msg = 'NEW TRIAL SIGNUP! Name: '+name+' Company: '+company+' Phone: '+phone+' Email: '+email;
+  fetch('https://wa.me/601151122831?text='+encodeURIComponent(msg));
+}
+function showToast(msg) {
+  var el=document.createElement('div'); el.className='ts'; el.textContent=msg;
+  document.getElementById('ts-wrap').appendChild(el);
+  setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},3500);
+}
+</script>
+</body>
+</html>
